@@ -3,4 +3,6 @@ An open-source software synthesizer. Trying to emulate the flexibility of rack s
 
 ## Dependencies
 
-  - RTAudio v5.2.0
+  - RTAudio
+  - Boost Circular Buffer
+  - Gtkmm
