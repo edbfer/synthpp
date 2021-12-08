@@ -15,28 +15,16 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <fstream>
+#pragma once
 
-//Audio library for the engine
-#include <rtaudio/RtAudio.h>
+#include <gtkmm/window.h>
 
-//Circular Buffer
-#include <boost/circular_buffer.hpp>
+// Mainwindow class
+//
+class MainWindow : public Gtk::Window {
 
-//windows
-#include <gtkmm/application.h>
+    public:
 
-//main UI
-#include "mainwindow.h"
-
-using namespace std;
-
-int main(int argc, char ** argv)
-{
-
-    auto gtkmm_application = Gtk::Application::create("org.edbfer.synthpp");
-
-    return gtkmm_application->make_window_and_run<MainWindow>(argc, argv);
-
-}
+        //constructor
+        MainWindow();
+};
