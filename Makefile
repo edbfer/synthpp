@@ -37,5 +37,5 @@ $(TARGET): $(OBJECTS)
 clean:
 	rm $(OBJECTS) $(TARGET)
 
-run:
+run: $(TARGET)
 	$(TARGET)

@@ -18,6 +18,11 @@
 #pragma once
 
 #include <gtkmm/window.h>
+#include <gtkmm/grid.h>
+#include <gtkmm/fixed.h>
+#include <gtkmm/label.h>
+#include <gtkmm/textview.h>
+#include <gtkmm/scrolledwindow.h>
 
 // Mainwindow class
 //
@@ -27,4 +32,14 @@ class MainWindow : public Gtk::Window {
 
         //constructor
         MainWindow();
+
+    protected:
+        Gtk::Grid main_grid;
+        Gtk::Fixed playfield;
+
+        Gtk::Grid right_panel;
+        Gtk::Label log_label;
+        Gtk::TextView log_panel;
+        Gtk::ScrolledWindow log_panel_scroll;
+
 };
