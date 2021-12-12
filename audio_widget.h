@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2021 eduardof
 // 
 // This file is part of synthpp.
 // 
@@ -15,31 +15,32 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
+#pragma once
+
 #include <iostream>
-#include <fstream>
 
-//Audio library for the engine
-#include <rtaudio/RtAudio.h>
+#include <gtkmm/frame.h>
+#include <gtkmm/fixed.h>
+#include <gtkmm/gesturedrag.h>
 
-//Circular Buffer
-#include <boost/circular_buffer.hpp>
-
-//windows
-#include <gtkmm/application.h>
-
-//main UI
-#include "mainwindow.h"
-
-using namespace std;
-
-Glib::RefPtr<Gtk::Application> gtkmm_application;
-int done = 0;
-
-int main(int argc, char ** argv)
+class audio_widget : public Gtk::Frame
 {
-    gtkmm_application = Gtk::Application::create("org.edbfer.synthpp");
 
-    gtkmm_application->make_window_and_run<MainWindow>(argc, argv);
+    public:
 
-    return 0;
-}
+        audio_widget();
+        ~audio_widget();
+
+        //get frame for UI
+        Glib::RefPtr<Gtk::Frame> get_underlaying_frame();
+
+    protected: 
+
+        //pointer
+        Glib::RefPtr<Gtk::GestureDrag> gesture_drag;
+
+        //child frame
+        void mouse_grab_callback(int x, int y);
+        void mouse_grab_update_callback(int offset_x, int offset_y);
+
+};

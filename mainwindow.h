@@ -20,9 +20,17 @@
 #include <gtkmm/window.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/fixed.h>
+#include <gtkmm/paned.h>
 #include <gtkmm/label.h>
 #include <gtkmm/textview.h>
+#include <gtkmm/frame.h>
 #include <gtkmm/scrolledwindow.h>
+#include <gtkmm/button.h>
+#include <gtkmm/drawingarea.h>
+
+#include <vector>
+
+#include "audio_widget.h"
 
 // Mainwindow class
 //
@@ -33,13 +41,28 @@ class MainWindow : public Gtk::Window {
         //constructor
         MainWindow();
 
+        //playfield functions
+        void playfield_add_widget(audio_widget& awidget);
+
     protected:
         Gtk::Grid main_grid;
+        
+        Gtk::ScrolledWindow playfield_scroll;
         Gtk::Fixed playfield;
+        Gtk::DrawingArea playfield_aux_darea;
 
         Gtk::Grid right_panel;
         Gtk::Label log_label;
         Gtk::TextView log_panel;
         Gtk::ScrolledWindow log_panel_scroll;
 
+        Gtk::Button test_button;
+
+        //playfield list
+        std::vector<audio_widget*> playfield_widget_list;
+
+        void test_button_clicked_callback();
+        void playfield_aux_darea_draw(const Glib::RefPtr<Cairo::Context> cairo_context, int width, int height);
+
+        void scrolled_edge_reached();
 };
