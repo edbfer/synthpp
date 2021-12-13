@@ -43,7 +43,7 @@ class MainWindow : public Gtk::Window {
 
         //playfield functions
         void playfield_add_widget(audio_widget& awidget);
-
+    
     protected:
         Gtk::Grid main_grid;
         
@@ -61,8 +61,12 @@ class MainWindow : public Gtk::Window {
         //playfield list
         std::vector<audio_widget*> playfield_widget_list;
 
-        void test_button_clicked_callback();
+        void test_button_clicked_callback();    
         void playfield_aux_darea_draw(const Glib::RefPtr<Cairo::Context> cairo_context, int width, int height);
 
-        void scrolled_edge_reached();
+        void scrolled_edge_reached(Gtk::PositionType pos_type);
+        void mainwindow_show_callback();
+        void gdk_surface_layout_callback(int width, int height);
+
+        bool playfield_trigger_redraw();
 };

@@ -20,7 +20,7 @@ CC = g++
 PKGCONF_INCLUDES = $(shell pkg-config gtkmm-4.0 -cflags)
 PKGCONF_LIBS = $(shell pkg-config gtkmm-4.0 -libs)
 
-OBJECTS = main.o mainwindow.o audio_widget.o
+OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o
 TARGET = synthpp
 
 CFLAGS = -O0 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)

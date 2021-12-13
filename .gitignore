@@ -5,3 +5,6 @@
 #object files
 *.o
 synthpp
+
+#core dumps
+vgcore*

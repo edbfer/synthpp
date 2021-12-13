@@ -1,4 +1,4 @@
-// Copyright (C) 2021 eduardof
+// Copyright (C) 2021 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -17,40 +17,34 @@
 
 #pragma once
 
-#include "port.h"
+#include <string>
 
-#include <iostream>
-
-#include <gtkmm/frame.h>
-#include <gtkmm/fixed.h>
+#include <gtkmm/label.h>
 #include <gtkmm/gesturedrag.h>
 
-class audio_widget : public Gtk::Frame
+class port : public Gtk::Label
 {
-
     public:
 
-        audio_widget();
-        ~audio_widget();
+        enum port_type
+        {
+            INPUT,
+            OUTPUT
+        };
 
-        //get frame for UI
-        void get_underlaying_fixed_position(int& x, int& y);
+        port(std::string label = "noname", port_type p_type = port_type::OUTPUT);
 
-        //add port
-        void add_port(port* p);
-        std::vector<port*>* get_port_list();
+        port_type get_direction();
+        void set_position_inwidget(int x, int y);
+        void get_position_inwidget(int& x, int& y);
 
-    protected: 
+    protected:
 
-        //pointer
         Glib::RefPtr<Gtk::GestureDrag> gesture_drag;
 
-        Gtk::Fixed fixed_canvas;
-
-        //child frame
         void mouse_grab_callback(int x, int y);
-        void mouse_grab_update_callback(int offset_x, int offset_y);
 
-        std::vector<port*> port_vector;
-
+        //position on the widget
+        int x, y;
+        port_type direction;
 };

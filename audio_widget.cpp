@@ -20,6 +20,9 @@
 
 #include <gtkmm/fixed.h>
 #include <gtkmm/frame.h>
+#include <gtkmm/grid.h>
+
+#include "mainwindow.h"
 
 #include "audio_widget.h"
 
@@ -35,6 +38,12 @@ audio_widget::audio_widget()
     //pressed event
     gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &audio_widget::mouse_grab_callback));
     gesture_drag->signal_drag_update().connect(sigc::mem_fun(*this, &audio_widget::mouse_grab_update_callback));  
+
+    //canvas
+    set_child(fixed_canvas);
+    fixed_canvas.set_expand(true);
+    fixed_canvas.set_halign(Gtk::Align::FILL);
+    fixed_canvas.set_valign(Gtk::Align::FILL);
 
     show();
 }
@@ -62,10 +71,45 @@ void audio_widget::mouse_grab_update_callback(int offset_x, int offset_y)
     y = std::max(std::min(y + offset_y, parent_max_y), 0.);
 
     parent->move(*this, x, y);
-
     //std::cout << "curpos: " << x << ", " << y << std::endl;
 }
 
 audio_widget::~audio_widget()
 {
+}
+
+void audio_widget::add_port(port* p)
+{
+    port_vector.push_back(p);
+
+    //place on the drawing
+    if(p->get_direction() == port::port_type::OUTPUT)
+    {
+        //get number of ports
+        int idx_port = port_vector.size() - 1;
+
+        int position_x, position_y;
+        get_size_request(position_x, position_y);
+
+        position_x -= 10;
+        position_y = 10 + idx_port*20;
+
+        fixed_canvas.put(*p, position_x, position_y);
+        p->set_position_inwidget(position_x, position_y);
+    } 
+    else if(p->get_direction() == port::port_type::INPUT)
+    {
+
+    }
+}
+
+std::vector<port*>* audio_widget::get_port_list()
+{
+    return &port_vector;
+}
+
+void audio_widget::get_underlaying_fixed_position(int& x, int& y)
+{
+    x = fixed_canvas.get_allocation().get_x();
+    y = fixed_canvas.get_allocation().get_y();
 }
