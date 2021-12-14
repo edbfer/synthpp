@@ -63,3 +63,23 @@ void port::mouse_grab_callback(int x, int y)
 {
     std::cout << x << ", " << y << std::endl;
 }
+
+bool port::is_hovered()
+{
+    return ui_hovered;
+}
+
+void port::set_hovered(bool hover)
+{
+    ui_hovered = hover;
+}
+
+bool port::is_grabbed()
+{
+    return ui_grabbed;
+}
+
+void port::set_grabbed(bool grab)
+{
+    ui_grabbed = grab;
+}

@@ -51,6 +51,11 @@ audio_widget::audio_widget()
 void audio_widget::mouse_grab_callback(int x, int y)
 {
     //std::cout << "Pressed at (" << x << ", " << y << ")" << std::endl;
+    //we only move on the top!
+    if (y > 50)
+        ignore_mouse_drag = 1;
+    else
+        ignore_mouse_drag = 0;
 }
 
 void audio_widget::mouse_grab_update_callback(int offset_x, int offset_y)
@@ -70,7 +75,8 @@ void audio_widget::mouse_grab_update_callback(int offset_x, int offset_y)
     x = std::max(std::min(x + offset_x, parent_max_x), 0.);
     y = std::max(std::min(y + offset_y, parent_max_y), 0.);
 
-    parent->move(*this, x, y);
+    if(!ignore_mouse_drag)
+        parent->move(*this, x, y);
     //std::cout << "curpos: " << x << ", " << y << std::endl;
 }
 

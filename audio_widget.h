@@ -47,6 +47,8 @@ class audio_widget : public Gtk::Frame
 
         Gtk::Fixed fixed_canvas;
 
+        int ignore_mouse_drag;
+
         //child frame
         void mouse_grab_callback(int x, int y);
         void mouse_grab_update_callback(int offset_x, int offset_y);

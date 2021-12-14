@@ -37,6 +37,10 @@ class port : public Gtk::Label
         port_type get_direction();
         void set_position_inwidget(int x, int y);
         void get_position_inwidget(int& x, int& y);
+        void set_hovered(bool hover);
+        void set_grabbed(bool grab);
+        bool is_hovered();
+        bool is_grabbed();
 
     protected:
 
@@ -47,4 +51,6 @@ class port : public Gtk::Label
         //position on the widget
         int x, y;
         port_type direction;
+        bool ui_hovered;
+        bool ui_grabbed;
 };

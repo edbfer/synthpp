@@ -49,7 +49,11 @@ class MainWindow : public Gtk::Window {
         
         Gtk::ScrolledWindow playfield_scroll;
         Gtk::Fixed playfield;
+
         Gtk::DrawingArea playfield_aux_darea;
+        bool darea_mouse_grabbed;
+        double darea_start_mouse_x, darea_start_mouse_y;
+        double darea_cur_mouse_x, darea_cur_mouse_y;
 
         Gtk::Grid right_panel;
         Gtk::Label log_label;
@@ -69,4 +73,8 @@ class MainWindow : public Gtk::Window {
         void gdk_surface_layout_callback(int width, int height);
 
         bool playfield_trigger_redraw();
+        void playfield_aux_darea_begin_grab(double x, double y);
+        void playfield_aux_darea_update_grab(double offset_x, double offset_y);
+        void playfield_aux_darea_end_grab(double x, double y);
+        void playfield_aux_darea_motion(double x, double y);
 };

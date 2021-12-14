@@ -19,12 +19,16 @@
 #include "debug_widget.h"
 #include "port.h"
 
+#include <pthread.h>
+
 #include <gdkmm/cairocontext.h>
 #include <gdkmm/cairoutils.h>
 #include <cairomm/cairomm.h>
 #include <gtkmm/layoutmanager.h>
 #include <gdkmm/surface.h>
 #include <glibmm/main.h>
+#include <gtkmm/gesturedrag.h>
+#include <gtkmm/eventcontrollermotion.h>
 
 MainWindow::MainWindow(){
 
@@ -87,7 +91,19 @@ MainWindow::MainWindow(){
     //show eevent
     signal_show().connect(sigc::mem_fun(*this, &MainWindow::mainwindow_show_callback));
     //trigger redraws
-    Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::playfield_trigger_redraw), 16);
+    Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::playfield_trigger_redraw), 10);
+
+    //attach drawing area mouse controller
+    Glib::RefPtr<Gtk::GestureDrag> darea_gesture_drag = Gtk::GestureDrag::create();
+    playfield_aux_darea.add_controller(darea_gesture_drag);
+
+    Glib::RefPtr<Gtk::EventControllerMotion> darea_mouse_motion = Gtk::EventControllerMotion::create();
+    playfield_aux_darea.add_controller(darea_mouse_motion);
+
+    darea_mouse_motion->signal_motion().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_motion));
+    darea_gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_begin_grab));
+    darea_gesture_drag->signal_drag_update().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_update_grab));
+    darea_gesture_drag->signal_drag_end().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_end_grab));
 }
 
 void MainWindow::playfield_add_widget(audio_widget& awidget)
@@ -129,6 +145,7 @@ void MainWindow::playfield_aux_darea_draw(Glib::RefPtr<Cairo::Context> cairo_con
         int aw_h = aw->get_allocation().get_height();
 
         int peg_radius = 6;
+        int bias = 2;
 
         std::vector<port*> p_list = *(aw->get_port_list());
         for(port* p : p_list)
@@ -141,14 +158,33 @@ void MainWindow::playfield_aux_darea_draw(Glib::RefPtr<Cairo::Context> cairo_con
             {
                 x = aw_x + aw_w;
             }
-            int y = p_y + aw_y + fixed_y + peg_radius;
+            int y = p_y + aw_y + fixed_y + peg_radius + bias;
 
-            cairo_context->set_source_rgb(0.0, 1.0, 0.0);
+            if(p->is_hovered())
+            {
+                cairo_context->set_source_rgb(1.0, 0.5, 0.0);
+            }
+            else if(p->is_grabbed())
+            {
+                cairo_context->set_source_rgb(1.0, 0.0, 0.0);
+            }
+            else
+            {
+                cairo_context->set_source_rgb(0.0, 1.0, 0.0);
+            }
 
             double x_coord = double(x)/double(width);
             double y_coord = double(y)/double(height);
             cairo_context->arc(x, y, peg_radius, 0, 2.*M_PI);
             cairo_context->fill();
+
+            if(p->is_grabbed())
+            {
+                cairo_context->move_to(x, y);
+                cairo_context->line_to(darea_cur_mouse_x, darea_cur_mouse_y);
+                cairo_context->set_line_width(4);
+                cairo_context->stroke();
+            }
         }
     }
 }
@@ -191,4 +227,122 @@ bool MainWindow::playfield_trigger_redraw()
 {
     playfield_aux_darea.queue_draw();
     return true;
+}
+
+void MainWindow::playfield_aux_darea_begin_grab(double x, double y)
+{
+    //look if one of the pegs is near, if it is then mark it
+    if(darea_mouse_grabbed == false)
+    {
+        //check if we are not grabbed already
+        for (audio_widget* aw : playfield_widget_list)
+        {
+            int aw_x = aw->get_allocation().get_x();
+            int aw_y = aw->get_allocation().get_y();
+
+            int fixed_x, fixed_y;
+            aw->get_underlaying_fixed_position(fixed_x, fixed_y);
+
+            int aw_w = aw->get_allocation().get_width();
+            int aw_h = aw->get_allocation().get_height();
+
+            int peg_radius = 6;
+            int bias = 2;
+
+            std::vector<port*> p_list = *(aw->get_port_list());
+            for(port* p : p_list)
+            {
+                //por def, we set_hovered(false)
+                p->set_grabbed(false);
+
+                int p_x, p_y;
+                p->get_position_inwidget(p_x, p_y);
+
+                int peg_x;
+                if(p->get_direction() == port::port_type::OUTPUT)
+                {
+                    peg_x = aw_x + aw_w;
+                }
+                int peg_y = p_y + aw_y + fixed_y + peg_radius + bias;
+
+                double distance = hypot(peg_x - x, peg_y - y);
+                if (distance < peg_radius)
+                {
+                    //we are in, marca como occupied
+                    p->set_grabbed(true);
+                    darea_mouse_grabbed = true;
+                    darea_start_mouse_x = x;
+                    darea_start_mouse_y = y;
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::playfield_aux_darea_update_grab(double offset_x, double offset_y)
+{
+    darea_cur_mouse_x = darea_start_mouse_x + offset_x;
+    darea_cur_mouse_y = darea_start_mouse_y + offset_y;
+}
+
+void MainWindow::playfield_aux_darea_end_grab(double x, double y)
+{
+    if(darea_mouse_grabbed)
+    {
+        for(audio_widget* aw : playfield_widget_list)
+        {
+            std::vector<port*> p_list = *(aw->get_port_list());
+            for(port* p : p_list)
+            {
+                p->set_grabbed(false);
+            }
+        }
+
+        darea_mouse_grabbed = false;
+        //darea_mouse_x = 0;
+        //darea_mouse_y = 0;
+    }
+}
+
+void MainWindow::playfield_aux_darea_motion(double x, double y)
+{
+    //look if one of the pegs is near, if it is then mark it
+    for (audio_widget* aw : playfield_widget_list)
+    {
+        int aw_x = aw->get_allocation().get_x();
+        int aw_y = aw->get_allocation().get_y();
+
+        int fixed_x, fixed_y;
+        aw->get_underlaying_fixed_position(fixed_x, fixed_y);
+
+        int aw_w = aw->get_allocation().get_width();
+        int aw_h = aw->get_allocation().get_height();
+
+        int peg_radius = 6;
+        int bias = 2;
+
+        std::vector<port*> p_list = *(aw->get_port_list());
+        for(port* p : p_list)
+        {
+            //por def, we set_hovered(false)
+            p->set_hovered(false);
+
+            int p_x, p_y;
+            p->get_position_inwidget(p_x, p_y);
+
+            int peg_x;
+            if(p->get_direction() == port::port_type::OUTPUT)
+            {
+                peg_x = aw_x + aw_w;
+            }
+            int peg_y = p_y + aw_y + fixed_y + peg_radius + bias;
+
+            double distance = hypot(peg_x - x, peg_y - y);
+            if (distance < peg_radius)
+            {
+                //we are in, marca como occupied
+                p->set_hovered(true);
+            }
+        }
+    }
 }
