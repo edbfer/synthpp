@@ -15,21 +15,39 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+#include "signal_path.h"
+#include "utils.h"
 
-#include <vector>
-
-#include "audio_widget.h"
-#include "port.h"
-
-class debug_widget : public audio_widget
+signal_path::signal_path(port* source, port* dest)
 {
-    public:
+    this->source_port = source;
+    this->destination_port = dest;
 
-        debug_widget(int x_pos, int y_pos);
+    std::string name = utils::gen_8char_id();
+    this->path_name = name;
+}
 
-        void post_creation_callback();
+port* signal_path::get_source_port()
+{
+    return source_port;
+}
 
-    protected:
+port* signal_path::get_destination_port()
+{
+    return destination_port;
+}
 
-};
+std::string signal_path::get_path_name()
+{
+    return path_name;
+}
+
+void signal_path::set_source_port(port* source)
+{
+    this->source_port = source;
+}
+
+void signal_path::set_destination_port(port* dest)
+{
+    this->destination_port = dest;
+}

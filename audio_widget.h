@@ -20,21 +20,34 @@
 #include "port.h"
 
 #include <iostream>
+#include <string>
 
 #include <gtkmm/frame.h>
+#include <gtkmm/label.h>
 #include <gtkmm/fixed.h>
 #include <gtkmm/gesturedrag.h>
+#include <gtkmm/cssprovider.h>
 
-class audio_widget : public Gtk::Frame
+class audio_widget : public Gtk::Fixed
 {
 
     public:
 
-        audio_widget();
+        audio_widget(int x_pos = 300, int y_pos = 300);
         ~audio_widget();
+
+        //this function is called each time the audio_widget is placed onto the playfield, so that
+        //all childs are already laid out and realized
+        virtual void post_creation_callback() {}
 
         //get frame for UI
         void get_underlaying_fixed_position(int& x, int& y);
+        
+        //css
+        void set_css_style(std::string filename, std::string css_class);
+
+        //set label
+        void set_label(std::string label);
 
         //add port
         void add_port(port* p);
@@ -45,7 +58,7 @@ class audio_widget : public Gtk::Frame
         //pointer
         Glib::RefPtr<Gtk::GestureDrag> gesture_drag;
 
-        Gtk::Fixed fixed_canvas;
+        Gtk::Label label;
 
         int ignore_mouse_drag;
 
@@ -55,4 +68,16 @@ class audio_widget : public Gtk::Frame
 
         std::vector<port*> port_vector;
 
+        //number of ports
+        int n_out_ports = 0;
+        int n_in_ports = 0;
+
+        void on_port_realize(port* p);
+
+        //position in the playfield
+        int x_pos = 0;
+        int y_pos = 0;
+
+        //css provider
+        Glib::RefPtr<Gtk::CssProvider> css_provider;
 };

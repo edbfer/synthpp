@@ -20,10 +20,10 @@ CC = g++
 PKGCONF_INCLUDES = $(shell pkg-config gtkmm-4.0 -cflags)
 PKGCONF_LIBS = $(shell pkg-config gtkmm-4.0 -libs)
 
-OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o
+OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o
 TARGET = synthpp
 
-CFLAGS = -O0 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
+CFLAGS = -O3 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
 LDFLAGS = $(PKGCONF_LIBS) -fno-stack-protector
 
 all: $(OBJECTS) $(TARGET)
@@ -31,7 +31,10 @@ all: $(OBJECTS) $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET)
 
-%.o: %.cpp
+main.o: main.cpp
+	$(CC) $(CFLAGS) -c main.cpp -o main.o
+
+%.o: %.cpp %.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

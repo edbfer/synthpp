@@ -25,6 +25,9 @@ port::port(std::string label, port_type p_type)
     this->direction = p_type;
     this->x = 0;
     this->y = 0;
+    this->ui_grabbed = false;
+    this->ui_hovered = false;
+
 
     //set up font
     Glib::RefPtr<Gtk::CssProvider> style_provider = Gtk::CssProvider::create();
@@ -53,10 +56,22 @@ void port::set_position_inwidget(int x, int y)
     this->y = y;
 }
 
+void port::set_position_indarea(int x, int y)
+{
+    this->darea_x = x;
+    this->darea_y = y;
+}
+
 void port::get_position_inwidget(int& x, int&y)
 {
     x = this->x;
     y = this->y;
+}
+
+void port::get_position_indarea(int& x, int&y)
+{
+    x = this->darea_x;
+    y = this->darea_y;
 }
 
 void port::mouse_grab_callback(int x, int y)

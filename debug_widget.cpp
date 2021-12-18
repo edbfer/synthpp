@@ -18,12 +18,13 @@
 #include "debug_widget.h"
 
 #include <string>
+#include <iostream>
 #include <gtkmm/cssprovider.h>
 
-debug_widget::debug_widget()
+debug_widget::debug_widget(int x_pos, int y_pos) : audio_widget(x_pos, y_pos)
 {
     set_label("Debug Widget!");
-    set_size_request(500, 500);
+    set_size_request(250, 150);
 
     //do 5 outputs
     //load the style provideer
@@ -32,6 +33,17 @@ debug_widget::debug_widget()
         port* p = new port("o" + std::to_string(i), port::port_type::OUTPUT);
         add_port(p);
         //estes vão ser output
+
+        p = new port("i" + std::to_string(i), port::port_type::INPUT);
+        add_port(p);
     }
 
+    signal_show().connect(sigc::mem_fun(*this, &debug_widget::post_creation_callback));
+
+    set_css_style("widget.css", "widget");
+}
+
+void debug_widget::post_creation_callback()
+{
+   std::cout << "putas" << std::endl;
 }

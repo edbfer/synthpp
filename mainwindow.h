@@ -31,6 +31,8 @@
 #include <vector>
 
 #include "audio_widget.h"
+#include "signal_path.h"
+#include "port.h"
 
 // Mainwindow class
 //
@@ -42,7 +44,8 @@ class MainWindow : public Gtk::Window {
         MainWindow();
 
         //playfield functions
-        void playfield_add_widget(audio_widget& awidget);
+        void playfield_add_widget(audio_widget* awidget);
+        void playfield_trigger_redraw();
     
     protected:
         Gtk::Grid main_grid;
@@ -72,9 +75,17 @@ class MainWindow : public Gtk::Window {
         void mainwindow_show_callback();
         void gdk_surface_layout_callback(int width, int height);
 
-        bool playfield_trigger_redraw();
+        bool do_redraw;
+        bool playfield_signal_redraw();
+        
         void playfield_aux_darea_begin_grab(double x, double y);
         void playfield_aux_darea_update_grab(double offset_x, double offset_y);
         void playfield_aux_darea_end_grab(double x, double y);
         void playfield_aux_darea_motion(double x, double y);
+
+        //tentative path
+        bool can_create_path;
+        signal_path* candidate_path;
+        port* starting_port;
+        std::vector<signal_path*> signal_path_list;
 };

@@ -15,21 +15,28 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+#include "utils.h"
 
-#include <vector>
+#include <random>
+#include <chrono>
 
-#include "audio_widget.h"
-#include "port.h"
+char charset[16] = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-class debug_widget : public audio_widget
+std::string utils::gen_8char_id()
 {
-    public:
+    std::chrono::time_point seed = std::chrono::high_resolution_clock::now();
 
-        debug_widget(int x_pos, int y_pos);
+    std::default_random_engine dr_engine(seed.time_since_epoch().count());
 
-        void post_creation_callback();
+    std::uniform_int_distribution<int> uint_distribution(0, 15);
+    
+    std::string output;
+    for(int i = 0; i < 8; i++)
+    {
+        int next_int = uint_distribution(dr_engine);
+        char to_add = charset[next_int];
+        output += to_add;
+    }
 
-    protected:
-
-};
+    return output;
+}

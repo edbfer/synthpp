@@ -17,19 +17,29 @@
 
 #pragma once
 
-#include <vector>
-
-#include "audio_widget.h"
 #include "port.h"
+#include <string>
+#include <random>
 
-class debug_widget : public audio_widget
+class signal_path
 {
+
     public:
+        signal_path(port* source = nullptr, port* dest = nullptr);
 
-        debug_widget(int x_pos, int y_pos);
+        void propagate(int n_samples);
 
-        void post_creation_callback();
+        port* get_source_port();
+        void set_source_port(port* source);
+
+        port* get_destination_port();
+        void set_destination_port(port* dest);
+        
+        std::string get_path_name();
 
     protected:
+        std::string path_name;
 
+        port* source_port;
+        port* destination_port;
 };

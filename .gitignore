@@ -8,3 +8,6 @@ synthpp
 
 #core dumps
 vgcore*
+
+#images
+*.png

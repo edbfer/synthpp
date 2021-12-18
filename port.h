@@ -35,8 +35,13 @@ class port : public Gtk::Label
         port(std::string label = "noname", port_type p_type = port_type::OUTPUT);
 
         port_type get_direction();
+
         void set_position_inwidget(int x, int y);
         void get_position_inwidget(int& x, int& y);
+
+        void set_position_indarea(int x, int y);
+        void get_position_indarea(int& x, int& y);
+
         void set_hovered(bool hover);
         void set_grabbed(bool grab);
         bool is_hovered();
@@ -53,4 +58,7 @@ class port : public Gtk::Label
         port_type direction;
         bool ui_hovered;
         bool ui_grabbed;
+
+        //position on darea
+        int darea_x, darea_y;
 };

@@ -17,19 +17,11 @@
 
 #pragma once
 
-#include <vector>
+#include <string>
 
-#include "audio_widget.h"
-#include "port.h"
-
-class debug_widget : public audio_widget
+//file with utils to be used on the program
+class utils
 {
     public:
-
-        debug_widget(int x_pos, int y_pos);
-
-        void post_creation_callback();
-
-    protected:
-
+        static std::string gen_8char_id();
 };
