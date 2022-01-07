@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2022 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -15,29 +15,32 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include <vector>
-
-#include <gtkmm/label.h>
-
-#include "audio_widget.h"
+#include "probe_widget.h"
 #include "port.h"
 
-class debug_widget : public audio_widget
+probe_widget::probe_widget() :
+    audio_widget(300, 300)
 {
-    public:
+    set_label(std::to_string(0.0f));
+    set_css_style("widget.css", "widget");
 
-        debug_widget(int x_pos, int y_pos);
+    set_size_request(100, 50);
 
-        void post_creation_callback();
-        void process();
-        void process_ui();
+    p = new port("input", port::port_type::INPUT);
+    add_port(p);
+}
 
-    protected:
+void probe_widget::process()
+{
+    state = p->pop_sample();
+}
 
-        //add a tick counter
-        long int ticks = 0;
-        Gtk::Label tick_counter_label;
+void probe_widget::process_ui()
+{
+    set_label(std::to_string(round(state * 1e2f) * 1e-2f));
+}
 
-};
+void probe_widget::post_creation_callback()
+{
+    set_ready(true);
+}

@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2022 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -17,27 +17,33 @@
 
 #pragma once
 
-#include <vector>
-
-#include <gtkmm/label.h>
-
 #include "audio_widget.h"
-#include "port.h"
 
-class debug_widget : public audio_widget
+#include <gtkmm/scale.h>
+
+//this is a widget that produces a counting of n bits, from the audio engine clock, at a desired
+//rate set by a HScale
+
+class counter_widget : public audio_widget
 {
+
     public:
 
-        debug_widget(int x_pos, int y_pos);
+        counter_widget(int nports);
 
-        void post_creation_callback();
         void process();
-        void process_ui();
+        void process_ui() {};
+        void post_creation_callback();
 
     protected:
 
-        //add a tick counter
-        long int ticks = 0;
-        Gtk::Label tick_counter_label;
+        Gtk::Scale freq_scale;
+
+        int nports;
+        long ticks = 0;
+        float frequency = 100;
+        int active_port = 0;
+
+        void freq_scale_value_changed();
 
 };

@@ -40,6 +40,12 @@ class audio_widget : public Gtk::Fixed
         //all childs are already laid out and realized
         virtual void post_creation_callback() {}
 
+        //this function is called for each sample calculated
+        virtual void process() {}
+
+        //this function is called independently for updating the ui in the ui thread
+        virtual void process_ui() {}
+
         //get frame for UI
         void get_underlaying_fixed_position(int& x, int& y);
         
@@ -53,6 +59,10 @@ class audio_widget : public Gtk::Fixed
         void add_port(port* p);
         std::vector<port*>* get_port_list();
 
+        //set ready state
+        void set_ready(bool ready);
+        bool is_ready();
+
     protected: 
 
         //pointer
@@ -61,6 +71,9 @@ class audio_widget : public Gtk::Fixed
         Gtk::Label label;
 
         int ignore_mouse_drag;
+
+        //ready to process
+        bool isReady;
 
         //child frame
         void mouse_grab_callback(int x, int y);

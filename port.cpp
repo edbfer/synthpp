@@ -42,6 +42,9 @@ port::port(std::string label, port_type p_type)
     gesture_drag = Gtk::GestureDrag::create();
     add_controller(gesture_drag);
     gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &port::mouse_grab_callback), false);
+
+    //create the buffer
+    buffer = boost::circular_buffer<float>(200);
 }
 
 
@@ -97,4 +100,16 @@ bool port::is_grabbed()
 void port::set_grabbed(bool grab)
 {
     ui_grabbed = grab;
+}
+
+float port::pop_sample()
+{
+    float res = buffer.front();
+    buffer.pop_front();
+    return res;
+}
+
+void port::push_sample(float sample)
+{
+    buffer.push_back(sample);
 }

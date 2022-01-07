@@ -27,16 +27,21 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/button.h>
 #include <gtkmm/drawingarea.h>
+#include <gtkmm/dropdown.h>
+#include <gtkmm/comboboxtext.h>
 
 #include <vector>
+#include <string>
 
 #include "audio_widget.h"
 #include "signal_path.h"
+#include "audio_engine.h"
 #include "port.h"
 
 // Mainwindow class
 //
-class MainWindow : public Gtk::Window {
+class MainWindow : public Gtk::Window 
+{
 
     public:
 
@@ -46,6 +51,9 @@ class MainWindow : public Gtk::Window {
         //playfield functions
         void playfield_add_widget(audio_widget* awidget);
         void playfield_trigger_redraw();
+
+        std::vector<audio_widget*>& get_audio_widget_list();
+        std::vector<signal_path*>& get_signal_path_list();
     
     protected:
         Gtk::Grid main_grid;
@@ -61,14 +69,26 @@ class MainWindow : public Gtk::Window {
         Gtk::Grid right_panel;
         Gtk::Label log_label;
         Gtk::TextView log_panel;
+
+        //widget list
+        Gtk::ComboBoxText widget_catalog;
+        
+        //function to write on the log window
+        void log(std::string text);
+
         Gtk::ScrolledWindow log_panel_scroll;
 
+        //buttons
         Gtk::Button test_button;
+
+        //start audioengine button
+        Gtk::Button start_engine_button;
 
         //playfield list
         std::vector<audio_widget*> playfield_widget_list;
 
-        void test_button_clicked_callback();    
+        void test_button_clicked_callback(); 
+        void start_engine_button_clicked_callback();   
         void playfield_aux_darea_draw(const Glib::RefPtr<Cairo::Context> cairo_context, int width, int height);
 
         void scrolled_edge_reached(Gtk::PositionType pos_type);
@@ -88,4 +108,7 @@ class MainWindow : public Gtk::Window {
         signal_path* candidate_path;
         port* starting_port;
         std::vector<signal_path*> signal_path_list;
+
+        //cria a audioengine
+        audio_engine* engine;
 };

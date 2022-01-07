@@ -17,6 +17,8 @@
 
 #include "mainwindow.h"
 #include "debug_widget.h"
+#include "counter_widget.h"
+#include "probe_widget.h"
 #include "port.h"
 
 #include <pthread.h>
@@ -28,6 +30,7 @@
 #include <gdkmm/surface.h>
 #include <glibmm/main.h>
 #include <gtkmm/gesturedrag.h>
+#include <gtkmm/textbuffer.h>
 #include <gtkmm/eventcontrollermotion.h>
 
 MainWindow::MainWindow(){
@@ -55,6 +58,7 @@ MainWindow::MainWindow(){
     log_label.set_hexpand(true);
     log_label.set_margin(5);
     log_label.set_halign(Gtk::Align::FILL);
+    log_label.set_can_focus(false);
     log_label.set_justify(Gtk::Justification::CENTER);
 
     //log view window
@@ -63,12 +67,28 @@ MainWindow::MainWindow(){
     log_panel_scroll.set_child(log_panel);
     log_panel.set_expand(true);
     log_panel.set_wrap_mode(Gtk::WrapMode::CHAR);
+    log_panel.set_can_focus(false);
+
+    start_engine_button.set_hexpand(true);
+    start_engine_button.set_label("Start Audio Engine!");
+    start_engine_button.set_margin(5);
+    start_engine_button.signal_clicked().connect(sigc::mem_fun(*this, &start_engine_button_clicked_callback));
+    right_panel.attach(start_engine_button, 0, 2, 1, 1);
+
+    widget_catalog.set_hexpand(true);
+    widget_catalog.set_margin(5);
+    widget_catalog.insert(0, "debug", "Debug widget");
+    widget_catalog.insert(1, "c4", "Counter: 4 bits");
+    widget_catalog.insert(2, "c8", "Counter: 8 bits");
+    widget_catalog.insert(3, "c16", "Counter: 16 bits");
+    widget_catalog.insert(4, "probe", "Probe widget");
+    right_panel.attach(widget_catalog, 0, 3, 1, 1);
 
     test_button.set_hexpand(true);
-    test_button.set_label("TEST!!!");
+    test_button.set_label("Add");
     test_button.set_margin(5);
     test_button.signal_clicked().connect(sigc::mem_fun(*this, &test_button_clicked_callback));
-    right_panel.attach(test_button, 0, 2, 1, 1);
+    right_panel.attach(test_button, 0, 4, 1, 1);
 
     //place the fixed
     playfield.set_expand(true);
@@ -91,7 +111,7 @@ MainWindow::MainWindow(){
     //show eevent
     signal_show().connect(sigc::mem_fun(*this, &MainWindow::mainwindow_show_callback));
     //trigger redraws
-    Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::playfield_signal_redraw), 33);
+    Glib::signal_timeout().connect(sigc::mem_fun(*this, &MainWindow::playfield_signal_redraw), 16.7);
 
     //attach drawing area mouse controller
     Glib::RefPtr<Gtk::GestureDrag> darea_gesture_drag = Gtk::GestureDrag::create();
@@ -124,8 +144,32 @@ void MainWindow::playfield_add_widget(audio_widget* awidget)
 
 void MainWindow::test_button_clicked_callback()
 {
-    debug_widget* dwtest = new debug_widget(300, 300);
-    playfield_add_widget(dwtest);
+    audio_widget* to_add;
+
+    std::string selection = widget_catalog.get_active_id();
+
+    if (selection == "debug")
+    {
+        to_add = new debug_widget(300, 300);
+    }
+    else if(selection == "c4")
+    {
+        to_add = new counter_widget(4);
+    }
+    else if(selection == "c8")
+    {
+        to_add = new counter_widget(8);
+    }
+    else if(selection == "c16")
+    {
+        to_add = new counter_widget(16);
+    }
+       else if(selection == "probe")
+    {
+        to_add = new probe_widget();
+    }
+
+    playfield_add_widget(to_add);
     
     //redraw
     playfield_aux_darea.queue_draw();
@@ -272,6 +316,13 @@ void MainWindow::playfield_trigger_redraw()
 bool MainWindow::playfield_signal_redraw()
 {
     playfield_aux_darea.queue_draw();
+
+    //also, ask if widgets want to redraw
+    for(audio_widget* aw : playfield_widget_list)
+    {
+        aw->process_ui();
+    }
+
     return true;
 }
 
@@ -349,14 +400,14 @@ void MainWindow::playfield_aux_darea_update_grab(double offset_x, double offset_
 
                 if(starting_port->get_direction() == port::port_type::INPUT && p->get_direction() == port::port_type::OUTPUT)
                 {
-                    tentative->set_source_port(starting_port);
-                    tentative->set_destination_port(p);
+                    tentative->set_source_port(p);
+                    tentative->set_destination_port(starting_port);
                     can_create_path = true;
                 }
                 else if(starting_port->get_direction() == port::port_type::OUTPUT && p->get_direction() == port::port_type::INPUT)
                 {
-                    tentative->set_source_port(p);
-                    tentative->set_destination_port(starting_port);
+                    tentative->set_source_port(starting_port);
+                    tentative->set_destination_port(p);
                     can_create_path = true;
                 }
             }
@@ -423,4 +474,20 @@ void MainWindow::playfield_aux_darea_motion(double x, double y)
             }
         }
     }
+}
+
+void MainWindow::log(std::string text)
+{
+    Glib::RefPtr<Gtk::TextBuffer> tbuffer = log_panel.get_buffer();
+    Gtk::TextBuffer::iterator iter = tbuffer->end();
+
+    tbuffer->insert(iter, text);
+}
+
+void MainWindow::start_engine_button_clicked_callback()
+{
+    log("Audio engine started @ 5000Hz");
+    engine = new audio_engine(&playfield_widget_list, &signal_path_list);
+
+    engine->start();
 }

@@ -41,9 +41,26 @@ debug_widget::debug_widget(int x_pos, int y_pos) : audio_widget(x_pos, y_pos)
     signal_show().connect(sigc::mem_fun(*this, &debug_widget::post_creation_callback));
 
     set_css_style("widget.css", "widget");
+
+    //create the counter
+    put(tick_counter_label, 75, 75);
+    tick_counter_label.set_text(std::to_string(0));
+    ticks = 0;
 }
 
 void debug_widget::post_creation_callback()
 {
-   std::cout << "putas" << std::endl;
+   //std::cout << "putas" << std::endl;
+   set_ready(true);
+}
+
+void debug_widget::process()
+{
+    ticks++;
+}
+
+void debug_widget::process_ui()
+{
+    //if(ticks % 1000 == 0) 
+    tick_counter_label.set_text(std::to_string(ticks));
 }

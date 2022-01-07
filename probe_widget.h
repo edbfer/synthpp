@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2022 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -17,27 +17,22 @@
 
 #pragma once
 
-#include <vector>
-
-#include <gtkmm/label.h>
-
 #include "audio_widget.h"
-#include "port.h"
 
-class debug_widget : public audio_widget
+//this simple widget only has one port and the title
+//just refers to the state of the input
+
+class probe_widget : public audio_widget
 {
     public:
+        probe_widget();
 
-        debug_widget(int x_pos, int y_pos);
-
-        void post_creation_callback();
         void process();
         void process_ui();
+        void post_creation_callback();
 
     protected:
 
-        //add a tick counter
-        long int ticks = 0;
-        Gtk::Label tick_counter_label;
-
+        port* p;
+        float state;
 };

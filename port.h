@@ -22,6 +22,8 @@
 #include <gtkmm/label.h>
 #include <gtkmm/gesturedrag.h>
 
+#include <boost/circular_buffer.hpp>
+
 class port : public Gtk::Label
 {
     public:
@@ -47,6 +49,9 @@ class port : public Gtk::Label
         bool is_hovered();
         bool is_grabbed();
 
+        float pop_sample();
+        void push_sample(float sample);
+
     protected:
 
         Glib::RefPtr<Gtk::GestureDrag> gesture_drag;
@@ -61,4 +66,7 @@ class port : public Gtk::Label
 
         //position on darea
         int darea_x, darea_y;
+
+        //audio samples data
+        boost::circular_buffer<float> buffer;
 };

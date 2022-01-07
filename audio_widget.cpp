@@ -46,11 +46,13 @@ audio_widget::audio_widget(int x_pos, int y_pos)
     gesture_drag->signal_drag_update().connect(sigc::mem_fun(*this, &audio_widget::mouse_grab_update_callback));  
 
     ////add handler to mapped fixed_canvas
-    //signal_show().connect(sigc::mem_fun(*this, &audio_widget::post_creation_callback));
+    signal_map().connect(sigc::mem_fun(*this, &audio_widget::post_creation_callback));
 
     //create css provider
     css_provider = Gtk::CssProvider::create();
     get_style_context()->add_provider(css_provider, GTK_STYLE_PROVIDER_PRIORITY_THEME);
+
+    isReady = false;
 }
 
 void audio_widget::mouse_grab_callback(int x, int y)
@@ -101,7 +103,7 @@ void audio_widget::mouse_grab_update_callback(int offset_x, int offset_y)
         }    
 
         //update the drawing area
-        ((MainWindow*) ((Gtk::Grid*) parent->get_parent())->get_parent())->playfield_trigger_redraw();
+        //((MainWindow*) ((Gtk::Grid*) parent->get_parent())->get_parent())->playfield_trigger_redraw();
     }
     //std::cout << "curpos: " << x << ", " << y << std::endl;
     
@@ -197,4 +199,14 @@ void audio_widget::set_css_style(std::string filename, std::string css_class)
 {
     css_provider->load_from_path("styles/" + filename);
     add_css_class(css_class);
+}
+
+void audio_widget::set_ready(bool ready)
+{
+    isReady = ready;
+}
+
+bool audio_widget::is_ready()
+{
+    return isReady;
 }

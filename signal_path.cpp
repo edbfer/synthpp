@@ -51,3 +51,8 @@ void signal_path::set_destination_port(port* dest)
 {
     this->destination_port = dest;
 }
+
+void signal_path::propagate(int nsamples)
+{
+    destination_port->push_sample(source_port->pop_sample());
+}
