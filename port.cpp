@@ -44,7 +44,7 @@ port::port(std::string label, port_type p_type)
     gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &port::mouse_grab_callback), false);
 
     //create the buffer
-    buffer = boost::circular_buffer<float>(200);
+    //buffer = boost::circular_buffer<float>(200);
 }
 
 
@@ -104,12 +104,16 @@ void port::set_grabbed(bool grab)
 
 float port::pop_sample()
 {
-    float res = buffer.front();
+    /*float res = buffer.front();
     buffer.pop_front();
-    return res;
+    return (buffer.size() == 0) ? 0.0f : res;*/
+    //float res = sample;
+    //sample = 0.f;
+    return sample;
 }
 
 void port::push_sample(float sample)
 {
-    buffer.push_back(sample);
+    //buffer.push_back(sample);
+    this->sample = sample;
 }

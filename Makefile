@@ -20,11 +20,13 @@ CC = g++
 PKGCONF_INCLUDES = $(shell pkg-config gtkmm-4.0 -cflags)
 PKGCONF_LIBS = $(shell pkg-config gtkmm-4.0 -libs)
 
-OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o
+PORTAUDIO_LIBS = -lportaudio
+
+OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o
 TARGET = synthpp
 
-CFLAGS = -O3 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
-LDFLAGS = $(PKGCONF_LIBS) -fno-stack-protector -pthread
+CFLAGS = -O0 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
+LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) -fno-stack-protector -pthread
 
 all: $(OBJECTS) $(TARGET)
 

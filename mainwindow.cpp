@@ -22,6 +22,8 @@
 #include "port.h"
 
 #include <pthread.h>
+#include <algorithm>
+#include <tuple>
 
 #include <gdkmm/cairocontext.h>
 #include <gdkmm/cairoutils.h>
@@ -69,11 +71,23 @@ MainWindow::MainWindow(){
     log_panel.set_wrap_mode(Gtk::WrapMode::CHAR);
     log_panel.set_can_focus(false);
 
+    ///audio_device_catalog.set_hexpand(true);
+    audio_device_catalog.set_margin(5);
+    audio_device_catalog.signal_changed().connect(sigc::mem_fun(*this, &MainWindow::audio_device_catalog_changed));
+    right_panel.attach(audio_device_catalog, 0, 2, 1, 1);
+
     start_engine_button.set_hexpand(true);
-    start_engine_button.set_label("Start Audio Engine!");
+    start_engine_button.set_label("Start Audio Engine");
     start_engine_button.set_margin(5);
     start_engine_button.signal_clicked().connect(sigc::mem_fun(*this, &start_engine_button_clicked_callback));
-    right_panel.attach(start_engine_button, 0, 2, 1, 1);
+
+    stop_engine_button.set_hexpand(true);
+    stop_engine_button.set_label("Stop Audio Engine");
+    stop_engine_button.set_margin(5);
+    stop_engine_button.signal_clicked().connect(sigc::mem_fun(*this, &stop_engine_button_clicked_callback));
+
+    right_panel.attach(start_engine_button, 0, 3, 1, 1);
+    right_panel.attach(stop_engine_button, 0, 4, 1, 1);
 
     widget_catalog.set_hexpand(true);
     widget_catalog.set_margin(5);
@@ -82,13 +96,13 @@ MainWindow::MainWindow(){
     widget_catalog.insert(2, "c8", "Counter: 8 bits");
     widget_catalog.insert(3, "c16", "Counter: 16 bits");
     widget_catalog.insert(4, "probe", "Probe widget");
-    right_panel.attach(widget_catalog, 0, 3, 1, 1);
+    right_panel.attach(widget_catalog, 0, 5, 1, 1);
 
     test_button.set_hexpand(true);
     test_button.set_label("Add");
     test_button.set_margin(5);
     test_button.signal_clicked().connect(sigc::mem_fun(*this, &test_button_clicked_callback));
-    right_panel.attach(test_button, 0, 4, 1, 1);
+    right_panel.attach(test_button, 0, 6, 1, 1);
 
     //place the fixed
     playfield.set_expand(true);
@@ -129,6 +143,9 @@ MainWindow::MainWindow(){
     can_create_path = false;
     darea_mouse_grabbed = false;
 
+    logger_ref.log = sigc::mem_fun(*this, &MainWindow::log);
+    logger_ref.put_widget = sigc::mem_fun(*this, &MainWindow::playfield_add_widget);
+    logger_ref.remove_widget = sigc::mem_fun(*this, &MainWindow::playfield_remove_widget);
 }
 
 void MainWindow::playfield_add_widget(audio_widget* awidget)
@@ -140,6 +157,13 @@ void MainWindow::playfield_add_widget(audio_widget* awidget)
     awidget->show();
 
     playfield_aux_darea.queue_draw();
+}
+
+void MainWindow::playfield_remove_widget(audio_widget* awidget)
+{
+    playfield_widget_list.erase(std::remove(playfield_widget_list.begin(), playfield_widget_list.end(), awidget), playfield_widget_list.end());
+
+    playfield.remove(*awidget);
 }
 
 void MainWindow::test_button_clicked_callback()
@@ -291,6 +315,22 @@ void MainWindow::mainwindow_show_callback()
     //attach to window size change event
     auto gdk_surface = get_surface();
     gdk_surface->signal_layout().connect(sigc::mem_fun(*this, &MainWindow::gdk_surface_layout_callback));
+
+    engine = new audio_engine(&playfield_widget_list, &signal_path_list, logger_ref);
+
+    //clip text
+    int width = audio_device_catalog.get_allocation().get_width();
+    Gtk::CellRendererText* cell_renderer = (Gtk::CellRendererText*) audio_device_catalog.get_first_cell();
+    cell_renderer->property_width_chars() = 1;
+    cell_renderer->property_ellipsize() = Pango::EllipsizeMode::END;
+    cell_renderer->set_fixed_size(width, -1);
+
+    //populate device list
+    int position = 0;
+    for(std::pair info_pair : *(engine->get_device_vector()))
+    {
+        audio_device_catalog.insert(position++, std::string(info_pair.second->name) + " (in: " + std::to_string(info_pair.second->maxInputChannels) + ", out: " + std::to_string(info_pair.second->maxOutputChannels) + ")");
+    }
 }
 
 void MainWindow::scrolled_edge_reached(Gtk::PositionType pos_type)
@@ -481,13 +521,29 @@ void MainWindow::log(std::string text)
     Glib::RefPtr<Gtk::TextBuffer> tbuffer = log_panel.get_buffer();
     Gtk::TextBuffer::iterator iter = tbuffer->end();
 
-    tbuffer->insert(iter, text);
+    tbuffer->insert(iter, text + "\n");
 }
 
 void MainWindow::start_engine_button_clicked_callback()
 {
     log("Audio engine started @ 5000Hz");
-    engine = new audio_engine(&playfield_widget_list, &signal_path_list);
-
     engine->start();
+
+    //disable device change
+    audio_device_catalog.set_sensitive(false);
+}
+
+void MainWindow::stop_engine_button_clicked_callback()
+{
+    log("Audio engine stopped.");
+    if(engine) engine->end();
+
+    //enable device change
+    audio_device_catalog.set_sensitive(true);
+}
+
+void MainWindow::audio_device_catalog_changed()
+{
+    int selection = audio_device_catalog.get_active_row_number();
+    engine->set_current_device(selection);
 }

@@ -68,5 +68,6 @@ class port : public Gtk::Label
         int darea_x, darea_y;
 
         //audio samples data
-        boost::circular_buffer<float> buffer;
+        //boost::circular_buffer<float> buffer;
+        float sample;
 };

@@ -4,6 +4,8 @@
 
 #object files
 *.o
+
+#target
 synthpp
 
 #core dumps

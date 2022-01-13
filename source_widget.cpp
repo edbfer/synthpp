@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2022 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -15,35 +15,29 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include "port.h"
 #include <string>
-#include <random>
+#include "source_widget.h"
 
-class signal_path
+source_widget::source_widget(int nports) : audio_widget(300, 300)
 {
+    this->nports = nports;
 
-    public:
-        signal_path(port* source = nullptr, port* dest = nullptr);
+    set_label("From Audio device");
+    set_css_style("widget.css", "widget");
 
-        //void propagate(int n_samples);
-        void propagate_input();
-        void propagate_output();
+    //create the output ports
+    for(int i = 0; i < nports; i++)
+    {
+        port* p = new port("device_in:" +  std::to_string(i), port::port_type::OUTPUT);
+        add_port(p);
+    }
+}
 
-        port* get_source_port();
-        void set_source_port(port* source);
+void source_widget::process()
+{}
 
-        port* get_destination_port();
-        void set_destination_port(port* dest);
-        
-        std::string get_path_name();
+void source_widget::process_ui()
+{}
 
-    protected:
-        std::string path_name;
-
-        float transport;
-
-        port* source_port;
-        port* destination_port;
-};
+void source_widget::post_creation_callback()
+{}

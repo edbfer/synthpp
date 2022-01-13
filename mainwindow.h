@@ -50,6 +50,7 @@ class MainWindow : public Gtk::Window
 
         //playfield functions
         void playfield_add_widget(audio_widget* awidget);
+        void playfield_remove_widget(audio_widget* widget);
         void playfield_trigger_redraw();
 
         std::vector<audio_widget*>& get_audio_widget_list();
@@ -72,6 +73,8 @@ class MainWindow : public Gtk::Window
 
         //widget list
         Gtk::ComboBoxText widget_catalog;
+        Gtk::ComboBoxText audio_device_catalog;
+        void audio_device_catalog_changed();
         
         //function to write on the log window
         void log(std::string text);
@@ -83,12 +86,14 @@ class MainWindow : public Gtk::Window
 
         //start audioengine button
         Gtk::Button start_engine_button;
+        Gtk::Button stop_engine_button;
 
         //playfield list
         std::vector<audio_widget*> playfield_widget_list;
 
         void test_button_clicked_callback(); 
         void start_engine_button_clicked_callback();   
+        void stop_engine_button_clicked_callback();  
         void playfield_aux_darea_draw(const Glib::RefPtr<Cairo::Context> cairo_context, int width, int height);
 
         void scrolled_edge_reached(Gtk::PositionType pos_type);
@@ -110,5 +115,8 @@ class MainWindow : public Gtk::Window
         std::vector<signal_path*> signal_path_list;
 
         //cria a audioengine
-        audio_engine* engine;
+        audio_engine* engine = nullptr;
+
+        //create logger structure to pass
+        logger logger_ref;
 };

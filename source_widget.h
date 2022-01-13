@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2022 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -17,33 +17,18 @@
 
 #pragma once
 
-#include "port.h"
-#include <string>
-#include <random>
+#include "audio_widget.h"
 
-class signal_path
+class source_widget : public audio_widget
 {
-
     public:
-        signal_path(port* source = nullptr, port* dest = nullptr);
+        source_widget(int nports);
 
-        //void propagate(int n_samples);
-        void propagate_input();
-        void propagate_output();
-
-        port* get_source_port();
-        void set_source_port(port* source);
-
-        port* get_destination_port();
-        void set_destination_port(port* dest);
-        
-        std::string get_path_name();
+        void post_creation_callback();
+        void process();
+        void process_ui();
 
     protected:
-        std::string path_name;
 
-        float transport;
-
-        port* source_port;
-        port* destination_port;
+        int nports;
 };

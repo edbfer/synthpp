@@ -15,37 +15,49 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "probe_widget.h"
-#include "port.h"
+#include <string>
+#include "sink_widget.h"
 
-#include <sstream>
-#include <iomanip>
-
-probe_widget::probe_widget() :
-    audio_widget(300, 300)
+sink_widget::sink_widget(int nports) : audio_widget(300, 300)
 {
-    set_label(std::to_string(0.0f));
+    this->nports = nports;
+
+    set_label("To Audio device");
     set_css_style("widget.css", "widget");
 
-    set_size_request(100, 50);
+    //create the output ports
+    for(int i = 0; i < nports; i++)
+    {
+        port* p = new port("device_out:" +  std::to_string(i), port::port_type::INPUT);
+        add_port(p);
+    }
 
-    p = new port("input", port::port_type::INPUT);
-    add_port(p);
+    samples = new float[nports];
 }
 
-void probe_widget::process()
+sink_widget::~sink_widget()
 {
-    state = p->pop_sample();
+    delete[] samples;
 }
 
-void probe_widget::process_ui()
+void sink_widget::process()
 {
-    std::stringstream output_value;
-    output_value << std::setprecision(2) << state;
-    set_label(output_value.str());
+    int i = 0;
+    for(port* p : *get_port_list())
+    {
+        samples[i++] = p->pop_sample();
+    }
 }
 
-void probe_widget::post_creation_callback()
+void sink_widget::process_ui()
+{}
+
+void sink_widget::post_creation_callback()
 {
     set_ready(true);
+}
+
+float* sink_widget::get_samples()
+{
+    return samples;
 }

@@ -111,6 +111,8 @@ void audio_widget::mouse_grab_update_callback(int offset_x, int offset_y)
 
 audio_widget::~audio_widget()
 {
+    for(port* p: this->port_vector)
+        delete p;
 }
 
 void audio_widget::add_port(port* p)
@@ -161,7 +163,7 @@ void audio_widget::add_port(port* p)
         get_size_request(position_x, position_y);
 
         position_x = 0;
-        position_y = 10 + n_out_ports*20;
+        position_y = 10 + n_in_ports*20;
 
         put(*p, position_x, position_y);
         p->set_position_inwidget(position_x, position_y);

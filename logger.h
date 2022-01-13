@@ -1,4 +1,4 @@
-// Copyright (C) 2021 Eduardo Ferreira
+// Copyright (C) 2022 Eduardo Ferreira
 // 
 // This file is part of synthpp.
 // 
@@ -15,35 +15,18 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
+//class that exposes the logging capabilities of the right panel
+
 #pragma once
 
-#include "port.h"
+#include <sigc++/slot.h>
 #include <string>
-#include <random>
 
-class signal_path
+#include "audio_widget.h"
+
+struct logger
 {
-
-    public:
-        signal_path(port* source = nullptr, port* dest = nullptr);
-
-        //void propagate(int n_samples);
-        void propagate_input();
-        void propagate_output();
-
-        port* get_source_port();
-        void set_source_port(port* source);
-
-        port* get_destination_port();
-        void set_destination_port(port* dest);
-        
-        std::string get_path_name();
-
-    protected:
-        std::string path_name;
-
-        float transport;
-
-        port* source_port;
-        port* destination_port;
+    sigc::slot<void(std::string)> log;
+    sigc::slot<void(audio_widget*)> put_widget;
+    sigc::slot<void(audio_widget*)> remove_widget;
 };
