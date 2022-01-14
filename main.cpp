@@ -18,9 +18,6 @@
 #include <iostream>
 #include <fstream>
 
-//Audio library for the engine
-#include <rtaudio/RtAudio.h>
-
 //Circular Buffer
 #include <boost/circular_buffer.hpp>
 
