@@ -25,6 +25,8 @@ signal_path::signal_path(port* source, port* dest)
 
     std::string name = utils::gen_8char_id();
     this->path_name = name;
+
+    this->ui_selected = false;
 }
 
 port* signal_path::get_source_port()
@@ -65,4 +67,50 @@ void signal_path::propagate_input()
 void signal_path::propagate_output()
 {
     transport = source_port->pop_sample();
+}
+
+bool signal_path::bounds_check(float mx, float my, float delta)
+{
+    const int peg_radius = 6;
+    const int bias = 2;
+
+    //check if the mouse is within the region
+    //get the vector of the wire
+    int p2_x, p2_y; destination_port->get_position_indarea(p2_x, p2_y);
+    p2_x -= peg_radius;
+    p2_y += peg_radius + bias;
+
+    int p1_x, p1_y; source_port->get_position_indarea(p1_x, p1_y);
+    p1_x += peg_radius;
+    p1_y += peg_radius + bias;
+
+    //wire vec
+    float wire_x = p2_x - p1_x;
+    float wire_y = p2_y - p1_y;
+
+    //tomouse vec
+    float tomouse_x = mx - p2_x;
+    float tomouse_y = my - p2_y;
+
+    //cosine between two vectors
+    float cosine = (wire_x*tomouse_x + wire_y*tomouse_y) / (hypot(wire_x, wire_y)*hypot(tomouse_x, tomouse_y));
+    float sine = sqrt(1.0f - cosine*cosine);
+
+    //distance to the line
+    float dist = hypot(tomouse_x, tomouse_y) * sine;
+
+    if(dist <= delta)
+        return true;
+    else
+        return false;
+}
+
+bool signal_path::is_ui_selected()
+{
+    return ui_selected;
+}
+
+void signal_path::set_ui_selected(bool ui_selected)
+{
+    this->ui_selected = ui_selected;
 }

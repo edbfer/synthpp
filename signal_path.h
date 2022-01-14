@@ -39,10 +39,17 @@ class signal_path
         
         std::string get_path_name();
 
+        bool is_ui_selected();
+        void set_ui_selected(bool ui_selected);
+
+        bool bounds_check(float mx, float my, float delta);
+
     protected:
         std::string path_name;
 
         float transport;
+
+        bool ui_selected;
 
         port* source_port;
         port* destination_port;

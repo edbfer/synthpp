@@ -25,7 +25,7 @@ PORTAUDIO_LIBS = -lportaudio
 OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o
 TARGET = synthpp
 
-CFLAGS = -O3 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
+CFLAGS = -Og -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
 LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) -fno-stack-protector -pthread
 
 all: $(OBJECTS) $(TARGET)

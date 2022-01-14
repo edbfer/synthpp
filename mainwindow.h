@@ -107,9 +107,15 @@ class MainWindow : public Gtk::Window
         void playfield_aux_darea_update_grab(double offset_x, double offset_y);
         void playfield_aux_darea_end_grab(double x, double y);
         void playfield_aux_darea_motion(double x, double y);
+        bool playfield_aux_darea_key_down(guint keyval, guint keycode, Gdk::ModifierType state);
+        void playfield_aux_darea_key_up(guint keyval, guint keycode, Gdk::ModifierType state);
 
         //tentative path
         bool can_create_path;
+        bool is_delete_key = false;
+        //delete path function
+        void remove_signal_path(signal_path* s_path);
+
         signal_path* candidate_path;
         port* starting_port;
         std::vector<signal_path*> signal_path_list;

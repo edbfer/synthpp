@@ -34,8 +34,10 @@
 #include <gdkmm/surface.h>
 #include <glibmm/main.h>
 #include <gtkmm/gesturedrag.h>
+#include <gtkmm/gestureclick.h>
 #include <gtkmm/textbuffer.h>
 #include <gtkmm/eventcontrollermotion.h>
+#include <gtkmm/eventcontrollerkey.h>
 
 MainWindow::MainWindow(){
 
@@ -139,12 +141,21 @@ MainWindow::MainWindow(){
     playfield_aux_darea.add_controller(darea_mouse_motion);
 
     darea_mouse_motion->signal_motion().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_motion));
+
     darea_gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_begin_grab));
     darea_gesture_drag->signal_drag_update().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_update_grab));
     darea_gesture_drag->signal_drag_end().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_end_grab));
 
+    //grab keyboard events
+    Glib::RefPtr<Gtk::EventControllerKey> darea_key_actions = Gtk::EventControllerKey::create();
+    add_controller(darea_key_actions);
+
+    darea_key_actions->signal_key_pressed().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_key_down), false);
+    darea_key_actions->signal_key_released().connect(sigc::mem_fun(*this, &MainWindow::playfield_aux_darea_key_up));
+
     //initialize vars
     can_create_path = false;
+    is_delete_key = false;
     darea_mouse_grabbed = false;
 
     logger_ref.log = sigc::mem_fun(*this, &MainWindow::log);
@@ -288,8 +299,8 @@ void MainWindow::playfield_aux_darea_draw(Glib::RefPtr<Cairo::Context> cairo_con
         s_path->get_source_port()->get_position_indarea(source_x, source_y);
         s_path->get_destination_port()->get_position_indarea(dest_x, dest_y);
 
-        source_x -= peg_radius; //input
-        dest_x += peg_radius; //output
+        source_x += peg_radius; //input
+        dest_x -= peg_radius; //output
 
         source_y += peg_radius + bias;
         dest_y += peg_radius + bias;
@@ -298,9 +309,18 @@ void MainWindow::playfield_aux_darea_draw(Glib::RefPtr<Cairo::Context> cairo_con
         int mid_x = (source_x + dest_x)/2;
         int mid_y = (source_y + dest_y)/2;
         cairo_context->move_to(mid_x, mid_y);
-        cairo_context->show_text("path_" + s_path->get_path_name());
 
-        cairo_context->set_source_rgb(0.0, 1.0, 0.0);
+        //is the path selected?
+        if(s_path->is_ui_selected())
+        {
+            cairo_context->set_source_rgb(1.0, 0.0, 0.0);
+            cairo_context->show_text("delete path_" + s_path->get_path_name());
+        }
+        else
+        {
+            cairo_context->set_source_rgb(0.0, 1.0, 0.0);
+            cairo_context->show_text("path_" + s_path->get_path_name());
+        }
 
         cairo_context->move_to(source_x, source_y);
         cairo_context->line_to(dest_x, dest_y);      
@@ -380,40 +400,58 @@ bool MainWindow::playfield_signal_redraw()
 
 void MainWindow::playfield_aux_darea_begin_grab(double x, double y)
 {
-    //look if one of the pegs is near, if it is then mark it
-    if(darea_mouse_grabbed == false)
-    {
-        //check if we are not grabbed already
-        for (audio_widget* aw : playfield_widget_list)
+    //are we deleting?
+    if(is_delete_key)
+    {   
+        //check if any paths need deleting
+        for(signal_path* path : signal_path_list)
         {
-            int peg_radius = 6;
-            int bias = 2;
-
-            std::vector<port*> p_list = *(aw->get_port_list());
-            for(port* p : p_list)
+            if(path->is_ui_selected())
             {
-                //por def, we set_hovered(false)
-                p->set_grabbed(false);
+                remove_signal_path(path);
+                delete path;
+            }
+            else
+                path->set_ui_selected(false);
+        }
+    }
+    else
+    {
+        //look if one of the pegs is near, if it is then mark it
+        if(darea_mouse_grabbed == false)
+        {
+            //check if we are not grabbed already
+            for (audio_widget* aw : playfield_widget_list)
+            {
+                int peg_radius = 6;
+                int bias = 2;
 
-                int p_x, p_y;
-                p->get_position_indarea(p_x, p_y);
-
-                int peg_x = p_x + ((p->get_direction() == port::port_type::OUTPUT) ? peg_radius : -peg_radius);
-                int peg_y = p_y + peg_radius + bias;
-
-                double distance = hypot(peg_x - x, peg_y - y);
-                if (distance < peg_radius)
+                std::vector<port*> p_list = *(aw->get_port_list());
+                for(port* p : p_list)
                 {
-                    //we are in, mark as occupied
-                    p->set_grabbed(true);
-                    starting_port = p;
-                    darea_mouse_grabbed = true;
-                    darea_start_mouse_x = darea_cur_mouse_x = x;
-                    darea_start_mouse_y = darea_cur_mouse_y = y;
+                    //por def, we set_hovered(false)
+                    p->set_grabbed(false);
 
-                    //create a new path
-                    can_create_path = false;
-                    candidate_path = new signal_path;
+                    int p_x, p_y;
+                    p->get_position_indarea(p_x, p_y);
+
+                    int peg_x = p_x + ((p->get_direction() == port::port_type::OUTPUT) ? peg_radius : -peg_radius);
+                    int peg_y = p_y + peg_radius + bias;
+
+                    double distance = hypot(peg_x - x, peg_y - y);
+                    if (distance < peg_radius)
+                    {
+                        //we are in, mark as occupied
+                        p->set_grabbed(true);
+                        starting_port = p;
+                        darea_mouse_grabbed = true;
+                        darea_start_mouse_x = darea_cur_mouse_x = x;
+                        darea_start_mouse_y = darea_cur_mouse_y = y;
+
+                        //create a new path
+                        can_create_path = false;
+                        candidate_path = new signal_path;
+                    }
                 }
             }
         }
@@ -498,31 +536,46 @@ void MainWindow::playfield_aux_darea_end_grab(double x, double y)
 
 void MainWindow::playfield_aux_darea_motion(double x, double y)
 {
-    //look if one of the pegs is near, if it is then mark it
-    for (audio_widget* aw : playfield_widget_list)
+    //are we on the delete mode?
+    if(is_delete_key)
     {
-        int peg_radius = 6;
-        int bias = 2;
-
-        std::vector<port*> p_list = *(aw->get_port_list());
-        for(port* p : p_list)
+        for(signal_path* path : signal_path_list)
         {
-            //por def, we set_hovered(false)
-            p->set_hovered(false);
+            path->set_ui_selected(false);
 
-            int p_x, p_y;
-            p->get_position_indarea(p_x, p_y);
+            //is the path being hovered?
+            if(path->bounds_check(x, y, 15.0f))
+                path->set_ui_selected(true);
+        }
+    }
+    else
+    {
+        //look if one of the pegs is near, if it is then mark it
+        for (audio_widget* aw : playfield_widget_list)
+        {
+            int peg_radius = 6;
+            int bias = 2;
 
-            int peg_x = p_x + ((p->get_direction() == port::port_type::OUTPUT) ? peg_radius : -peg_radius);
-            int peg_y = p_y + peg_radius + bias;
-
-            double distance = hypot(peg_x - x, peg_y - y);
-            if (distance < peg_radius)
+            std::vector<port*> p_list = *(aw->get_port_list());
+            for(port* p : p_list)
             {
-                //we are in, marca como occupied
-                p->set_hovered(true);
+                //por def, we set_hovered(false)
+                p->set_hovered(false);
 
-                //playfield_aux_darea.queue_draw();
+                int p_x, p_y;
+                p->get_position_indarea(p_x, p_y);
+
+                int peg_x = p_x + ((p->get_direction() == port::port_type::OUTPUT) ? peg_radius : -peg_radius);
+                int peg_y = p_y + peg_radius + bias;
+
+                double distance = hypot(peg_x - x, peg_y - y);
+                if (distance < peg_radius)
+                {
+                    //we are in, marca como occupied
+                    p->set_hovered(true);
+
+                    //playfield_aux_darea.queue_draw();
+                }
             }
         }
     }
@@ -538,7 +591,7 @@ void MainWindow::log(std::string text)
 
 void MainWindow::start_engine_button_clicked_callback()
 {
-    log("Audio engine started @ 5000Hz");
+    log("Audio engine started");
     engine->start();
 
     //disable device change
@@ -559,3 +612,34 @@ void MainWindow::audio_device_catalog_changed()
     int selection = audio_device_catalog.get_active_row_number();
     engine->set_current_device(selection);
 }
+
+bool MainWindow::playfield_aux_darea_key_down(guint keyval, guint keycode, Gdk::ModifierType state)
+{
+    if(keyval == GDK_KEY_Control_L)
+    {
+        //enable wire delete mode
+        is_delete_key = true;
+    }
+    return true;
+}
+
+void MainWindow::playfield_aux_darea_key_up(guint keyval, guint keycode, Gdk::ModifierType state)
+{
+    if(keyval == GDK_KEY_Control_L)
+    {
+        //reset delete bit
+        //xor with itself
+        is_delete_key ^= is_delete_key;
+
+        //lets not keep anyone selected
+        for(signal_path* sp : signal_path_list)
+            sp->set_ui_selected(false);
+    }
+}
+
+
+void MainWindow::remove_signal_path(signal_path* s_path)
+{
+    //delete from the list
+    signal_path_list.erase(std::remove(signal_path_list.begin(), signal_path_list.end(), s_path), signal_path_list.end());
+}  
