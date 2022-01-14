@@ -22,7 +22,7 @@ PKGCONF_LIBS = $(shell pkg-config gtkmm-4.0 -libs)
 
 PORTAUDIO_LIBS = -lportaudio
 
-OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o
+OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o
 TARGET = synthpp
 
 CFLAGS = -Og -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)

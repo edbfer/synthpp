@@ -22,6 +22,7 @@
 #include "port.h"
 #include "delay_widget.h"
 #include "feedback_delay_widget.h"
+#include "gain_widget.h"
 
 #include <pthread.h>
 #include <algorithm>
@@ -98,10 +99,11 @@ MainWindow::MainWindow(){
     widget_catalog.insert(0, "debug", "Debug widget");
     widget_catalog.insert(1, "delay", "Slap-Back Delay");
     widget_catalog.insert(2, "fdelay", "Feedback Delay");
-    widget_catalog.insert(3, "c4", "Counter: 4 bits");
-    widget_catalog.insert(4, "c8", "Counter: 8 bits");
-    widget_catalog.insert(5, "c16", "Counter: 16 bits");
-    widget_catalog.insert(6, "probe", "Probe widget");
+    widget_catalog.insert(3, "gain", "Gain");
+    widget_catalog.insert(4, "c4", "Counter: 4 bits");
+    widget_catalog.insert(5, "c8", "Counter: 8 bits");
+    widget_catalog.insert(6, "c16", "Counter: 16 bits");
+    widget_catalog.insert(7, "probe", "Probe widget");
     right_panel.attach(widget_catalog, 0, 5, 1, 1);
 
     test_button.set_hexpand(true);
@@ -198,6 +200,10 @@ void MainWindow::test_button_clicked_callback()
     else if(selection == "fdelay")
     {
         to_add = new feedback_delay_widget();
+    }
+    else if(selection == "gain")
+    {
+        to_add = new gain_widget();
     }
     else if(selection == "c4")
     {
