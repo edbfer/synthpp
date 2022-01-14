@@ -20,6 +20,8 @@
 #include "counter_widget.h"
 #include "probe_widget.h"
 #include "port.h"
+#include "delay_widget.h"
+#include "feedback_delay_widget.h"
 
 #include <pthread.h>
 #include <algorithm>
@@ -92,10 +94,12 @@ MainWindow::MainWindow(){
     widget_catalog.set_hexpand(true);
     widget_catalog.set_margin(5);
     widget_catalog.insert(0, "debug", "Debug widget");
-    widget_catalog.insert(1, "c4", "Counter: 4 bits");
-    widget_catalog.insert(2, "c8", "Counter: 8 bits");
-    widget_catalog.insert(3, "c16", "Counter: 16 bits");
-    widget_catalog.insert(4, "probe", "Probe widget");
+    widget_catalog.insert(1, "delay", "Slap-Back Delay");
+    widget_catalog.insert(2, "fdelay", "Feedback Delay");
+    widget_catalog.insert(3, "c4", "Counter: 4 bits");
+    widget_catalog.insert(4, "c8", "Counter: 8 bits");
+    widget_catalog.insert(5, "c16", "Counter: 16 bits");
+    widget_catalog.insert(6, "probe", "Probe widget");
     right_panel.attach(widget_catalog, 0, 5, 1, 1);
 
     test_button.set_hexpand(true);
@@ -175,6 +179,14 @@ void MainWindow::test_button_clicked_callback()
     if (selection == "debug")
     {
         to_add = new debug_widget(300, 300);
+    }
+    else if(selection == "delay")
+    {
+        to_add = new delay_widget();
+    }
+    else if(selection == "fdelay")
+    {
+        to_add = new feedback_delay_widget();
     }
     else if(selection == "c4")
     {

@@ -239,10 +239,10 @@ int audio_engine::stream_callback(const void* input, void* output, unsigned long
         }
     }
 
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> elapsed = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(t2 - t1);
+    // auto t2 = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<float> elapsed = std::chrono::duration_cast<std::chrono::duration<float, std::milli>>(t2 - t1);
 
-    std::cout << "elapsed: " << elapsed.count() << std::endl;
+    // std::cout << "elapsed: " << elapsed.count() << std::endl;
 
     return paContinue;
 }
