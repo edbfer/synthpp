@@ -4,13 +4,14 @@ An open-source software synthesizer. Trying to emulate the flexibility of rack s
 ## Dependencies
 
   - PortAudio
+  - PortMidi
   - Boost Circular Buffer
   - Gtkmm-4.0
 
 ## Picture of the Day
 ![screenshot](screenshot.png)
 
-as seen in 14/01/2022
+as seen in 04/02/2022
 
 ## Details
 
@@ -26,10 +27,10 @@ as seen in 14/01/2022
    - Simple delay;
    - Delay with feedback, echo.
 
-  This marks, however, the first prototype of the program, with a working audio engine and two working audio widgets. We release the first version of this very almost pre- alpha software: <B> 0.1-alpha </B>
+  This marks, however, the first prototype of the program, with a working audio engine and two working audio widgets. We release the first version of this very almost pre-alpha software: <B> 0.1-alpha </B>
 
   ## Please read: Information
 
-  This software is still in development, definitely very buggy, and done by someone which is not a professional IT-designer/programmer/... While it "works", I cannot promise it won't burn down your house, or kill your gold fish -- it's your risk. Jokes aside, it is "as-is", don't expect a fully polished software, or one that has been professionally designed and quality assessed.
+  This software is still in development, definitely very buggy, and done by someone who is not a professional IT designer/programmer/... While it "works", I cannot promise it won't burn down your house, or kill your goldfish -- it's your risk. Jokes aside, it is "as-is", don't expect a fully polished software, or one that has been professionally designed and quality assessed.
 
   

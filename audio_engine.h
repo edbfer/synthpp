@@ -30,6 +30,8 @@
 
 #include <pthread.h>
 #include <portaudio.h>
+#include <portmidi.h>
+#include <porttime.h>
 
 class audio_engine
 {

@@ -45,6 +45,14 @@ audio_engine::audio_engine(std::vector<audio_widget*>* widget_list, std::vector<
             device_vector.push_back(std::pair(i, info));
         }
     }
+
+    //now its time to create the midi context
+    PmError midi_err;
+    midi_err = Pm_Initialize();
+    if(err != pmNoError) log.log(Pm_GetErrorText(midi_err));
+    //device enumeration is done by the widget...
+    //need porttime for portmidi timekeeping
+    Pt_Start(1, NULL, NULL);
 }
 
 void audio_engine::set_current_device(int id)
