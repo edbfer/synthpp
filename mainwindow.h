@@ -29,6 +29,7 @@
 #include <gtkmm/drawingarea.h>
 #include <gtkmm/dropdown.h>
 #include <gtkmm/comboboxtext.h>
+#include <gtkmm/headerbar.h>
 
 #include <vector>
 #include <string>
@@ -61,6 +62,12 @@ class MainWindow : public Gtk::Window
         
         Gtk::ScrolledWindow playfield_scroll;
         Gtk::Fixed playfield;
+
+        //add menu buttons
+        Gtk::HeaderBar header_bar;
+        Gtk::Button hbar_midi_options_button;
+        //associated actions
+        void hbar_midi_options_button_clicked();
 
         Gtk::DrawingArea playfield_aux_darea;
         bool darea_mouse_grabbed;

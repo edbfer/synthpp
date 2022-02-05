@@ -25,6 +25,9 @@
 #include "gain_widget.h"
 #include "midi_widget.h"
 
+//dialogs
+#include "midi_options_dialog.h"
+
 #include <pthread.h>
 #include <algorithm>
 #include <tuple>
@@ -47,6 +50,13 @@ MainWindow::MainWindow(){
 
     int height = 768, width = 1024;
     set_default_size(width, height);
+
+    //do the header bar
+    set_titlebar(header_bar);
+    hbar_midi_options_button.set_label("MIDI Options");
+    hbar_midi_options_button.set_hexpand(true);
+    hbar_midi_options_button.signal_clicked().connect(sigc::mem_fun(*this, &hbar_midi_options_button_clicked));
+    header_bar.pack_end(hbar_midi_options_button);
 
     //create the grid widget
     set_child(main_grid);
@@ -655,3 +665,11 @@ void MainWindow::remove_signal_path(signal_path* s_path)
     //delete from the list
     signal_path_list.erase(std::remove(signal_path_list.begin(), signal_path_list.end(), s_path), signal_path_list.end());
 }  
+
+void MainWindow::hbar_midi_options_button_clicked()
+{
+    midi_options_dialog* midi_dialog = new midi_options_dialog(engine); //this cannot be a stack variable as these get deleted at the end of the scope, which effectively kills the dialog right as it is shownE
+    midi_dialog->set_transient_for(*this);
+    midi_dialog->set_modal(true);
+    midi_dialog->show();
+}
