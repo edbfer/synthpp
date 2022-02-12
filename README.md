@@ -11,7 +11,7 @@ An open-source software synthesizer. Trying to emulate the flexibility of rack s
 ## Picture of the Day
 ![screenshot](screenshot.png)
 
-as seen in 04/02/2022
+as seen in 12/02/2022
 
 ## Details
 
@@ -22,12 +22,11 @@ as seen in 04/02/2022
 
   They work equally well.
 
-  Right now, we have only added two audio widgets, both delays:
+  Right now, we have only added three audio widgets:
 
    - Simple delay;
    - Delay with feedback, echo.
-
-  This marks, however, the first prototype of the program, with a working audio engine and two working audio widgets. We release the first version of this very almost pre-alpha software: <B> 0.1-alpha </B>
+   - Primitive MIDI controls.
 
   ## Please read: Information
 

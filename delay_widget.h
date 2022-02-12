@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "context.h"
 #include "audio_widget.h"
 #include "port.h"
 
@@ -29,7 +30,7 @@
 class delay_widget : public audio_widget
 {
     public:
-        delay_widget();
+        delay_widget(context* program_context);
 
         void process();
         void process_ui();

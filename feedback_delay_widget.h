@@ -20,6 +20,8 @@
 #pragma once
 
 #include <boost/circular_buffer.hpp>
+
+#include "context.h"
 #include "audio_widget.h"
 #include "port.h"
 
@@ -29,7 +31,8 @@ class feedback_delay_widget : public audio_widget
 {
     public:
 
-        feedback_delay_widget();
+        feedback_delay_widget(context* program_context);
+        ~feedback_delay_widget();
 
         void process();
         void process_ui();
@@ -37,11 +40,20 @@ class feedback_delay_widget : public audio_widget
 
     protected:
 
+        //control ports
+        port* n_samples_port;
+        port* dry_wet_port;
+        port* feedback_port;
+
         port* input_port;
         port* output_port;
 
+        int n_samples;
+        bool n_samples_dirty = false;
         float dry_wet = 0.5f;
+        bool dry_wet_dirty = false;
         float feedback = 0.5f;
+        bool feedback_dirty = false;
 
         Gtk::Scale n_samples_selector;
         Gtk::Scale dry_wet_selector;

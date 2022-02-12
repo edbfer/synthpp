@@ -27,7 +27,7 @@ port::port(std::string label, port_type p_type)
     this->y = 0;
     this->ui_grabbed = false;
     this->ui_hovered = false;
-
+    this->connected = false;
 
     //set up font
     Glib::RefPtr<Gtk::CssProvider> style_provider = Gtk::CssProvider::create();
@@ -85,6 +85,16 @@ void port::mouse_grab_callback(int x, int y)
 bool port::is_hovered()
 {
     return ui_hovered;
+}
+
+bool port::is_connected()
+{
+    return connected;
+}
+
+void port::set_connected(bool connected)
+{
+    this->connected = connected;
 }
 
 void port::set_hovered(bool hover)

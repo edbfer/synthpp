@@ -15,18 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-//class that exposes the logging capabilities of the right panel
-
+//foward declaration of the midi_widget class
 #pragma once
-
-#include <sigc++/slot.h>
-#include <string>
-
-#include "audio_widget.h"
-
-struct logger
-{
-    sigc::slot<void(std::string)> log;
-    sigc::slot<void(audio_widget*)> put_widget;
-    sigc::slot<void(audio_widget*)> remove_widget;
-};
+#include "audio_widget_fwd.h"
+class midi_widget;

@@ -17,6 +17,7 @@
 
 //this class defines a midi interface for use within the other widgets
 
+#include "context.h"
 #include "audio_widget.h"
 #include "port.h"
 
@@ -24,6 +25,9 @@
 #include <queue>
 
 #include <gtkmm/comboboxtext.h>
+#include <gtkmm/box.h>
+#include <gtkmm/spinbutton.h>
+#include <gtkmm/checkbutton.h>
 
 #include <portmidi.h>
 
@@ -32,21 +36,36 @@ class midi_widget : public audio_widget
 
     public:
 
-        midi_widget();
+        midi_widget(context* context);
         ~midi_widget();
 
         void process();
         void process_ui();
         void post_creation_callback();
 
+        void push_midi_event(PmEvent message);
+        bool event_filter(PmDeviceID device_id, midi_types type, int data1);
+
     protected:
 
         std::map<int, PmDeviceID> midi_device_list;
 
+        Gtk::Box v_box;
+        Gtk::Box h_box;
+
         Gtk::ComboBoxText midi_device_combo;
+        Gtk::ComboBoxText type_combo;
+        Gtk::SpinButton controller_number_button;
+        Gtk::CheckButton normalize_output_button;
         void midi_device_combo_changed();
+        void type_combo_value_changed();
+        void controller_number_button_value_changed();
+        void normalize_output_button_changed();
 
         PmDeviceID midi_current_device = -1;
+        midi_types midi_current_type;
+        int controller_current;
+        bool normalize;
 
         port* output_port;
 
@@ -55,5 +74,4 @@ class midi_widget : public audio_widget
         std::queue<PmEvent> midi_event_queue;
 
         int lastmsg = 0;
-
 };

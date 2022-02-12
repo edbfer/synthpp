@@ -19,7 +19,7 @@
 
 #include <gtkmm/adjustment.h>
 
-feedback_delay_widget::feedback_delay_widget()
+feedback_delay_widget::feedback_delay_widget(context* program_context) : audio_widget(program_context)
 {
     set_label("Feedback Delay");
     set_css_style("widget.css", "widget");
@@ -39,7 +39,9 @@ feedback_delay_widget::feedback_delay_widget()
     n_samples_selector.set_orientation(Gtk::Orientation::VERTICAL);
     n_samples_selector.set_draw_value(true);
     n_samples_selector.set_size_request(50, 300);
-
+    n_samples_port = new port("nsamp", port::port_type::INPUT);
+    add_port(n_samples_port);
+    
     Glib::RefPtr<Gtk::Adjustment> adj = n_samples_selector.get_adjustment();
     adj->set_value(44099);
     adj->set_upper(44100);
@@ -53,6 +55,8 @@ feedback_delay_widget::feedback_delay_widget()
     dry_wet_selector.set_orientation(Gtk::Orientation::VERTICAL);
     dry_wet_selector.set_draw_value(true);
     dry_wet_selector.set_size_request(50, 300);
+    dry_wet_port = new port("d/w", port::port_type::INPUT);
+    add_port(dry_wet_port);
 
     adj = dry_wet_selector.get_adjustment();
     adj->set_value(0.5f);
@@ -67,6 +71,8 @@ feedback_delay_widget::feedback_delay_widget()
     feedback_selector.set_orientation(Gtk::Orientation::VERTICAL);
     feedback_selector.set_draw_value(true);
     feedback_selector.set_size_request(50, 300);
+    feedback_port = new port("fback", port::port_type::INPUT);
+    add_port(feedback_port);
 
     adj = feedback_selector.get_adjustment();
     adj->set_value(0.5f);
@@ -81,8 +87,35 @@ feedback_delay_widget::feedback_delay_widget()
     feedback_selector.signal_value_changed().connect(sigc::mem_fun(*this, &feedback_delay_widget::feedback_selector_value_changed));
 }
 
+feedback_delay_widget::~feedback_delay_widget()
+{
+    delete input_port;
+    delete output_port;
+    delete n_samples_port;
+    delete dry_wet_port;
+    delete feedback_port;
+}
+
 void feedback_delay_widget::process()
 {
+    //control values, if needed
+    if(n_samples_port->is_connected()) 
+    {
+        n_samples = n_samples_port->pop_sample() * 44100.f; 
+        cbuffer.rresize(n_samples, 0.0f); 
+        n_samples_dirty = true;
+    }
+    if(dry_wet_port->is_connected()) 
+    {
+        dry_wet = dry_wet_port->pop_sample();
+        dry_wet_dirty = true;
+    }
+    if(feedback_port->is_connected()) 
+    {
+        feedback = feedback_port->pop_sample();
+        feedback_dirty = true;
+    }
+
     //get value at input port
     float sample = input_port->pop_sample();
 
@@ -101,7 +134,24 @@ void feedback_delay_widget::process()
 }
 
 void feedback_delay_widget::process_ui()
-{}
+{
+    //check if any control is dirty
+    if(n_samples_dirty)
+    {
+        n_samples_selector.get_adjustment()->set_value(n_samples);
+        n_samples_dirty = false;
+    }
+    if(feedback_dirty)
+    {
+        feedback_selector.get_adjustment()->set_value(feedback);
+        feedback_dirty = false;
+    }
+    if(dry_wet_dirty)
+    {
+        dry_wet_selector.get_adjustment()->set_value(dry_wet);
+        dry_wet_dirty = false;
+    }
+}
 
 void feedback_delay_widget::post_creation_callback()
 {
@@ -114,6 +164,7 @@ void feedback_delay_widget::n_samples_selector_value_changed()
     int nsamples = (int) n_samples_selector.get_value();
 
     cbuffer.rresize(nsamples, 0.f);
+    n_samples = nsamples;
 }
 
 void feedback_delay_widget::dry_wet_selector_value_changed()

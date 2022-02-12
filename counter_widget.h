@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "context.h"
 #include "audio_widget.h"
 
 #include <gtkmm/scale.h>
@@ -29,7 +30,7 @@ class counter_widget : public audio_widget
 
     public:
 
-        counter_widget(int nports);
+        counter_widget(context* program_context, int nports);
 
         void process();
         void process_ui() {};

@@ -19,7 +19,7 @@
 
 #include <gtkmm/adjustment.h>
 
-gain_widget::gain_widget() : audio_widget(300, 300)
+gain_widget::gain_widget(context* program_context) : audio_widget(program_context, 300, 300)
 {
     set_label("Gain");
     set_css_style("widget.css", "widget");

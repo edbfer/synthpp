@@ -15,25 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
+//foward declaration of the audio_widget class
 #pragma once
-
-#include "context.h"
-#include "audio_widget.h"
-
-//this simple widget only has one port and the title
-//just refers to the state of the input
-
-class probe_widget : public audio_widget
-{
-    public:
-        probe_widget(context* program_context);
-
-        void process();
-        void process_ui();
-        void post_creation_callback();
-
-    protected:
-
-        port* p;
-        float state;
-};
+class audio_widget;

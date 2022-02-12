@@ -18,6 +18,7 @@
 #pragma once
 
 #include "port.h"
+#include "context.h"
 
 #include <iostream>
 #include <string>
@@ -28,12 +29,13 @@
 #include <gtkmm/gesturedrag.h>
 #include <gtkmm/cssprovider.h>
 
+
 class audio_widget : public Gtk::Fixed
 {
 
     public:
 
-        audio_widget(int x_pos = 300, int y_pos = 300);
+        audio_widget(context* program_context, int x_pos = 300, int y_pos = 300);
         ~audio_widget();
 
         //this function is called each time the audio_widget is placed onto the playfield, so that
@@ -93,4 +95,7 @@ class audio_widget : public Gtk::Fixed
 
         //css provider
         Glib::RefPtr<Gtk::CssProvider> css_provider;
+
+        //context
+        context* program_context;
 };

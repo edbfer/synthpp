@@ -19,7 +19,7 @@
 
 #include <gtkmm/adjustment.h>
 
-delay_widget::delay_widget() : audio_widget(300, 300)
+delay_widget::delay_widget(context* program_context) : audio_widget(program_context, 300, 300)
 {
     set_label("Slap-Back");
     set_css_style("widget.css", "widget");

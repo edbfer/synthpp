@@ -37,6 +37,8 @@ class port : public Gtk::Label
         port(std::string label = "noname", port_type p_type = port_type::OUTPUT);
 
         port_type get_direction();
+        bool is_connected();
+        void set_connected(bool connected);
 
         void set_position_inwidget(int x, int y);
         void get_position_inwidget(int& x, int& y);
@@ -63,6 +65,7 @@ class port : public Gtk::Label
         port_type direction;
         bool ui_hovered;
         bool ui_grabbed;
+        bool connected;
 
         //position on darea
         int darea_x, darea_y;

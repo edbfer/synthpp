@@ -26,6 +26,7 @@ class signal_path
 
     public:
         signal_path(port* source = nullptr, port* dest = nullptr);
+        ~signal_path();
 
         //void propagate(int n_samples);
         void propagate_input();

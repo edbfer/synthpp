@@ -20,8 +20,26 @@
 #include <gtkmm/dialog.h>
 #include <gtkmm/label.h>
 #include <gtkmm/box.h>
+#include <gtkmm/treeview.h>
+#include <gtkmm/liststore.h>
 
 #include "audio_engine.h"
+
+class midi_list_record : public Gtk::TreeModel::ColumnRecord
+{
+    public:
+
+        Gtk::TreeModelColumn<int> device_id;
+        Gtk::TreeModelColumn<Glib::ustring> device_name;
+        Gtk::TreeModelColumn<bool> device_is_enabled;
+    
+        midi_list_record()
+        {
+            add(device_id);
+            add(device_name);
+            add(device_is_enabled);
+        }
+};
 
 
 class midi_options_dialog : public Gtk::Dialog
@@ -38,5 +56,12 @@ class midi_options_dialog : public Gtk::Dialog
         //container
         Gtk::Box v_box;
 
+        //container of midi devices
+        midi_list_record midi_cols;
+        Gtk::TreeView midi_tree_view;
+        Glib::RefPtr<Gtk::ListStore> midi_list_store;
+
         audio_engine* engine;
+
+        void dialog_response(int response);
 };

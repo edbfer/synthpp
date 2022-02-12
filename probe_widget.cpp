@@ -21,8 +21,8 @@
 #include <sstream>
 #include <iomanip>
 
-probe_widget::probe_widget() :
-    audio_widget(300, 300)
+probe_widget::probe_widget(context* program_context) :
+    audio_widget(program_context, 300, 300)
 {
     set_label(std::to_string(0.0f));
     set_css_style("widget.css", "widget");

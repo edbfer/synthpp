@@ -21,7 +21,7 @@
 #include <iostream>
 #include <gtkmm/cssprovider.h>
 
-debug_widget::debug_widget(int x_pos, int y_pos) : audio_widget(x_pos, y_pos)
+debug_widget::debug_widget(context* program_context, int x_pos, int y_pos) : audio_widget(program_context, x_pos, y_pos)
 {
     set_label("Debug Widget!");
     set_size_request(250, 150);

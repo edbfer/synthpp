@@ -20,13 +20,15 @@
 #pragma once
 
 #include <gtkmm/scale.h>
+
+#include "context.h"
 #include "audio_widget.h"
 #include "port.h"
 
 class gain_widget : public audio_widget
 {
     public:
-        gain_widget();
+        gain_widget(context* program_context);
 
         void process();
         void process_ui();

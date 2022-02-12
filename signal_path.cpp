@@ -29,6 +29,12 @@ signal_path::signal_path(port* source, port* dest)
     this->ui_selected = false;
 }
 
+signal_path::~signal_path()
+{
+    source_port->set_connected(false);
+    destination_port->set_connected(false);
+}
+
 port* signal_path::get_source_port()
 {
     return source_port;
@@ -46,11 +52,25 @@ std::string signal_path::get_path_name()
 
 void signal_path::set_source_port(port* source)
 {
+    //check if there is a port previously
+    if(source_port != nullptr)
+    {
+        source_port->set_connected(false);
+    }
+
+    source->set_connected(true);
     this->source_port = source;
 }
 
 void signal_path::set_destination_port(port* dest)
 {
+    //check if there is a port previously
+    if(destination_port != nullptr)
+    {
+        destination_port->set_connected(false);
+    }
+
+    dest->set_connected(true);
     this->destination_port = dest;
 }
 

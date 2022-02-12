@@ -21,6 +21,8 @@
 
 #include <gtkmm/label.h>
 
+//#include "audio_widget.h"
+#include "context.h"
 #include "audio_widget.h"
 #include "port.h"
 
@@ -28,7 +30,7 @@ class debug_widget : public audio_widget
 {
     public:
 
-        debug_widget(int x_pos, int y_pos);
+        debug_widget(context* program_context, int x_pos, int y_pos);
 
         void post_creation_callback();
         void process();

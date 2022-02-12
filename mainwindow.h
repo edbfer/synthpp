@@ -131,5 +131,5 @@ class MainWindow : public Gtk::Window
         audio_engine* engine = nullptr;
 
         //create logger structure to pass
-        logger logger_ref;
+        context program_context;
 };

@@ -172,9 +172,9 @@ MainWindow::MainWindow(){
     is_delete_key = false;
     darea_mouse_grabbed = false;
 
-    logger_ref.log = sigc::mem_fun(*this, &MainWindow::log);
-    logger_ref.put_widget = sigc::mem_fun(*this, &MainWindow::playfield_add_widget);
-    logger_ref.remove_widget = sigc::mem_fun(*this, &MainWindow::playfield_remove_widget);
+    program_context.log = sigc::mem_fun(*this, &MainWindow::log);
+    program_context.put_widget = sigc::mem_fun(*this, &MainWindow::playfield_add_widget);
+    program_context.remove_widget = sigc::mem_fun(*this, &MainWindow::playfield_remove_widget);
 }
 
 void MainWindow::playfield_add_widget(audio_widget* awidget)
@@ -203,39 +203,39 @@ void MainWindow::test_button_clicked_callback()
 
     if (selection == "debug")
     {
-        to_add = new debug_widget(300, 300);
+        to_add = new debug_widget(&program_context, 300, 300);
     }
     else if(selection == "delay")
     {
-        to_add = new delay_widget();
+        to_add = new delay_widget(&program_context);
     }
     else if(selection == "fdelay")
     {
-        to_add = new feedback_delay_widget();
+        to_add = new feedback_delay_widget(&program_context);
     }
     else if(selection == "gain")
     {
-        to_add = new gain_widget();
+        to_add = new gain_widget(&program_context);
     }
     else if(selection == "midi")
     {
-        to_add = new midi_widget();
+        to_add = new midi_widget(&program_context);
     }
     else if(selection == "c4")
     {
-        to_add = new counter_widget(4);
+        to_add = new counter_widget(&program_context, 4);
     }
     else if(selection == "c8")
     {
-        to_add = new counter_widget(8);
+        to_add = new counter_widget(&program_context, 8);
     }
     else if(selection == "c16")
     {
-        to_add = new counter_widget(16);
+        to_add = new counter_widget(&program_context, 16);
     }
        else if(selection == "probe")
     {
-        to_add = new probe_widget();
+        to_add = new probe_widget(&program_context);
     }
 
     playfield_add_widget(to_add);
@@ -370,7 +370,7 @@ void MainWindow::mainwindow_show_callback()
     auto gdk_surface = get_surface();
     gdk_surface->signal_layout().connect(sigc::mem_fun(*this, &MainWindow::gdk_surface_layout_callback));
 
-    engine = new audio_engine(&playfield_widget_list, &signal_path_list, logger_ref);
+    engine = new audio_engine(&playfield_widget_list, &signal_path_list, &program_context);
 
     //clip text
     int width = audio_device_catalog.get_allocation().get_width();

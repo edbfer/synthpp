@@ -20,7 +20,7 @@
 
 #include <gtkmm/adjustment.h>
 
-counter_widget::counter_widget(int nports)
+counter_widget::counter_widget(context* program_context, int nports) : audio_widget(program_context)
 {
     this->nports = nports;
 
