@@ -19,12 +19,10 @@
 
 #include <string>
 
-#include <gtkmm/label.h>
-#include <gtkmm/gesturedrag.h>
-
+#include <gtk/gtk.h>
 #include <boost/circular_buffer.hpp>
 
-class port : public Gtk::Label
+class port
 {
     public:
 
@@ -46,6 +44,10 @@ class port : public Gtk::Label
         void set_position_indarea(int x, int y);
         void get_position_indarea(int& x, int& y);
 
+        GtkAllocation get_allocation();
+        std::string get_label();
+        GtkLabel* get_base_class();
+
         void set_hovered(bool hover);
         void set_grabbed(bool grab);
         bool is_hovered();
@@ -56,9 +58,11 @@ class port : public Gtk::Label
 
     protected:
 
-        Glib::RefPtr<Gtk::GestureDrag> gesture_drag;
+        GtkLabel* base_class;
 
-        void mouse_grab_callback(int x, int y);
+        GtkGestureDrag* gesture_drag;
+
+        static void mouse_grab_callback(GtkGestureDrag* gdrag, int x, int y, port* port);
 
         //position on the widget
         int x, y;

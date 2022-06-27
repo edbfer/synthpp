@@ -28,6 +28,8 @@ class probe_widget : public audio_widget
     public:
         probe_widget(context* program_context);
 
+        void on_creation_callback();
+
         void process();
         void process_ui();
         void post_creation_callback();

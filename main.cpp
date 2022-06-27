@@ -22,21 +22,31 @@
 #include <boost/circular_buffer.hpp>
 
 //windows
-#include <gtkmm/application.h>
+#include <glib.h>
+#include <adwaita.h>
 
 //main UI
 #include "mainwindow.h"
 
+//load plugins
+//dynamic lib stuff
+#include <dlfcn.h>
+
 using namespace std;
 
-Glib::RefPtr<Gtk::Application> gtkmm_application;
 int done = 0;
 
 int main(int argc, char ** argv)
 {
-    gtkmm_application = Gtk::Application::create("org.edbfer.synthpp");
+    AdwApplication* application = NULL;
 
-    gtkmm_application->make_window_and_run<MainWindow>(argc, argv);
+    MainWindow window;
 
-    return 0;
+    //g_log_set_always_fatal(G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING);
+    //g_setenv("G_DEBUG", "fatal-criticals", true);
+
+    application = adw_application_new("org.edbfer.syntpp", G_APPLICATION_FLAGS_NONE);
+    g_signal_connect(application, "activate", G_CALLBACK(MainWindow::create_layout), &window);
+
+    return g_application_run(G_APPLICATION(application), argc, argv);   
 }

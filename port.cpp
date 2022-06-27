@@ -18,7 +18,8 @@
 #include "port.h"
 
 #include <iostream>
-#include <gtkmm/cssprovider.h>
+#include <gtk/gtkstylecontext.h>
+#include <gtk/gtkcssprovider.h>
 
 port::port(std::string label, port_type p_type)
 {
@@ -29,19 +30,23 @@ port::port(std::string label, port_type p_type)
     this->ui_hovered = false;
     this->connected = false;
 
-    //set up font
-    Glib::RefPtr<Gtk::CssProvider> style_provider = Gtk::CssProvider::create();
-    style_provider->load_from_path("styles/port.css");
-    get_style_context()->add_provider(style_provider, GTK_STYLE_PROVIDER_PRIORITY_THEME);
-    add_css_class("port");
+    base_class = (GtkLabel*) gtk_label_new("");
 
-    set_text(label);
-    set_xalign(1.0);
+    //set up font
+    GtkCssProvider* style_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(style_provider, "styles/port.css");
+
+    GtkStyleContext* ctx = gtk_widget_get_style_context(GTK_WIDGET(base_class));
+    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER(style_provider), GTK_STYLE_PROVIDER_PRIORITY_THEME);
+    gtk_widget_add_css_class(GTK_WIDGET(base_class), "port");
+
+    gtk_label_set_text(base_class, label.c_str());
+    gtk_label_set_xalign(base_class, 1.0);
 
     //add touch handler, para que no futuro se faça drag n drop
-    gesture_drag = Gtk::GestureDrag::create();
-    add_controller(gesture_drag);
-    gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &port::mouse_grab_callback), false);
+    gesture_drag = (GtkGestureDrag*) gtk_gesture_drag_new();
+    gtk_widget_add_controller(GTK_WIDGET(base_class), GTK_EVENT_CONTROLLER(gesture_drag));
+    g_signal_connect(gesture_drag, "drag-begin", G_CALLBACK(mouse_grab_callback), this);
 
     //create the buffer
     //buffer = boost::circular_buffer<float>(200);
@@ -77,9 +82,9 @@ void port::get_position_indarea(int& x, int&y)
     y = this->darea_y;
 }
 
-void port::mouse_grab_callback(int x, int y)
+void port::mouse_grab_callback(GtkGestureDrag* gdrag, int x, int y, port* port)
 {
-    std::cout << x << ", " << y << std::endl;
+    //std::cout << x << ", " << y << std::endl;
 }
 
 bool port::is_hovered()
@@ -126,4 +131,21 @@ void port::push_sample(float sample)
 {
     //buffer.push_back(sample);
     this->sample = sample;
+}
+
+GtkAllocation port::get_allocation()
+{
+    GtkAllocation alloc;
+    gtk_widget_get_allocation(GTK_WIDGET(base_class), &alloc);
+    return alloc;
+}
+
+std::string port::get_label()
+{
+    return std::string(gtk_label_get_label(base_class));
+}
+
+GtkLabel* port::get_base_class()
+{
+    return base_class;
 }

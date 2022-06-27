@@ -19,8 +19,6 @@
 
 #include <vector>
 
-#include <gtkmm/label.h>
-
 //#include "audio_widget.h"
 #include "context.h"
 #include "audio_widget.h"
@@ -30,8 +28,9 @@ class debug_widget : public audio_widget
 {
     public:
 
-        debug_widget(context* program_context, int x_pos, int y_pos);
+        debug_widget(context* program_context, int x_pos, int y_pos) : audio_widget(program_context, x_pos, y_pos) {};
 
+        void on_creation_callback();
         void post_creation_callback();
         void process();
         void process_ui();
@@ -40,6 +39,5 @@ class debug_widget : public audio_widget
 
         //add a tick counter
         long int ticks = 0;
-        Gtk::Label tick_counter_label;
 
 };

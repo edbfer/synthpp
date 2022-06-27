@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <gtkmm/scale.h>
-
 #include "context.h"
 #include "audio_widget.h"
 #include "port.h"
@@ -30,16 +28,13 @@ class gain_widget : public audio_widget
     public:
         gain_widget(context* program_context);
 
+        void on_creation_callback();
+
         void process();
         void process_ui();
         void post_creation_callback();
 
     protected:
-
-        float gain;
         port* input_port;
         port* output_port;
-        
-        void gain_scale_value_changed();
-        Gtk::Scale gain_scale;
 };

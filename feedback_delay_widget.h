@@ -25,14 +25,14 @@
 #include "audio_widget.h"
 #include "port.h"
 
-#include <gtkmm/scale.h>
-
 class feedback_delay_widget : public audio_widget
 {
     public:
 
         feedback_delay_widget(context* program_context);
         ~feedback_delay_widget();
+
+        void on_creation_callback();
 
         void process();
         void process_ui();
@@ -48,20 +48,8 @@ class feedback_delay_widget : public audio_widget
         port* input_port;
         port* output_port;
 
-        int n_samples;
-        bool n_samples_dirty = false;
-        float dry_wet = 0.5f;
-        bool dry_wet_dirty = false;
-        float feedback = 0.5f;
-        bool feedback_dirty = false;
-
-        Gtk::Scale n_samples_selector;
-        Gtk::Scale dry_wet_selector;
-        Gtk::Scale feedback_selector;
+        int last_size;
 
         boost::circular_buffer<float> cbuffer;
 
-        void n_samples_selector_value_changed();
-        void dry_wet_selector_value_changed();
-        void feedback_selector_value_changed();
 };

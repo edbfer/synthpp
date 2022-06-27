@@ -22,7 +22,9 @@
 class source_widget : public audio_widget
 {
     public:
-        source_widget(int nports);
+        source_widget(context* program_context, int nports);
+
+        void on_creation_callback();
 
         void post_creation_callback();
         void process();

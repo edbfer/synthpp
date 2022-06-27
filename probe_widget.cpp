@@ -22,7 +22,11 @@
 #include <iomanip>
 
 probe_widget::probe_widget(context* program_context) :
-    audio_widget(program_context, 300, 300)
+    audio_widget(program_context)
+{
+}
+
+void probe_widget::on_creation_callback()
 {
     set_label(std::to_string(0.0f));
     set_css_style("widget.css", "widget");

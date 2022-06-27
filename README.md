@@ -6,7 +6,8 @@ An open-source software synthesizer. Trying to emulate the flexibility of rack s
   - PortAudio
   - PortMidi
   - Boost Circular Buffer
-  - Gtkmm-4.0
+  - Gtk4.0
+  - libAdwaita-1
 
 ## Picture of the Day
 ![screenshot](screenshot.png)

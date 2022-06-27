@@ -20,8 +20,6 @@
 #include "context.h"
 #include "audio_widget.h"
 
-#include <gtkmm/scale.h>
-
 //this is a widget that produces a counting of n bits, from the audio engine clock, at a desired
 //rate set by a HScale
 
@@ -32,19 +30,16 @@ class counter_widget : public audio_widget
 
         counter_widget(context* program_context, int nports);
 
+        void on_creation_callback();
+
         void process();
         void process_ui() {};
         void post_creation_callback();
 
     protected:
 
-        Gtk::Scale freq_scale;
-
         int nports;
         long ticks = 0;
-        float frequency = 100;
         int active_port = 0;
-
-        void freq_scale_value_changed();
 
 };

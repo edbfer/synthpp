@@ -17,15 +17,13 @@
 
 //dialog for selecting used midi devices
 
-#include <gtkmm/dialog.h>
-#include <gtkmm/label.h>
-#include <gtkmm/box.h>
-#include <gtkmm/treeview.h>
-#include <gtkmm/liststore.h>
+#pragma once
+
+#include <gtk/gtk.h>
 
 #include "audio_engine.h"
 
-class midi_list_record : public Gtk::TreeModel::ColumnRecord
+/*class midi_list_record : public Gtk::TreeModel::ColumnRecord
 {
     public:
 
@@ -39,29 +37,37 @@ class midi_list_record : public Gtk::TreeModel::ColumnRecord
             add(device_name);
             add(device_is_enabled);
         }
-};
+};*/
 
 
-class midi_options_dialog : public Gtk::Dialog
+class midi_options_dialog
 {
     public:
 
-        midi_options_dialog(audio_engine* engine);
+        midi_options_dialog(GtkWindow* parent, audio_engine* engine);
+        void show();
 
     protected:
 
+        GtkWindow* parent;
+        GtkDialog* base_class;
+
         //explanation label
-        Gtk::Label explanation_label;
+        GtkLabel* explanation_label;
 
         //container
-        Gtk::Box v_box;
+        GtkBox* v_box;
 
         //container of midi devices
-        midi_list_record midi_cols;
-        Gtk::TreeView midi_tree_view;
-        Glib::RefPtr<Gtk::ListStore> midi_list_store;
+        GtkTreeView* midi_tree_view;
+        GtkListStore* midi_list_store;
+
+        GtkTreeViewColumn* name_column;
+        GtkTreeViewColumn* sel_column;
 
         audio_engine* engine;
 
-        void dialog_response(int response);
+        static void cell_renderer_toggled(GtkCellRendererToggle* tgl, gchar* path, midi_options_dialog* dialog);
+        static void dialog_response(GtkDialog* dlg, int response, midi_options_dialog* dialog);
+        static void mapped_signal(GtkDialog* dlg, midi_options_dialog* dialog);
 };

@@ -17,7 +17,7 @@
 
 
 #include "audio_engine.h"
-#include "midi_widget.h"
+//#include "midi_widget.h"
 #include <chrono>
 #include <cstring>
 
@@ -96,8 +96,8 @@ void audio_engine::set_current_device(int id)
         program_context->remove_widget(sink);
         delete sink;
     }
-    source = new source_widget(current_device->maxInputChannels);
-    sink = new sink_widget(current_device->maxOutputChannels);
+    source = new source_widget(program_context, current_device->maxInputChannels);
+    sink = new sink_widget(program_context, current_device->maxOutputChannels);
 
     program_context->put_widget(source);
     program_context->put_widget(sink);
@@ -251,14 +251,14 @@ int audio_engine::stream_callback(const void* input, void* output, unsigned long
 
                     midi_types type = (midi_types) midi_type(Pm_MessageStatus(next.message));
 
-                    for(auto consumer : context->midi_consumers_list)
+                    /*for(auto consumer : context->midi_consumers_list)
                     {
                         if(consumer->event_filter(dev_id, type, Pm_MessageData1(next.message)))
                         {
                             //this one wants it
                             consumer->push_midi_event(next);
                         }
-                    }
+                    }*/
                 }
             }
         }

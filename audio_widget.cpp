@@ -18,10 +18,7 @@
 #include <cassert>
 #include <cmath>
 
-#include <gtkmm/fixed.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/grid.h>
-#include <pangomm/layout.h>
+#include <gtk/gtk.h>
 
 #include "mainwindow.h"
 
@@ -33,72 +30,80 @@ audio_widget::audio_widget(context* program_context, int x_pos, int y_pos)
     this->y_pos = y_pos;
     this->program_context = program_context;
 
-    set_label("Empty widget");
-    set_size_request(200, 200);
+    base_class = (GtkFixed*) gtk_fixed_new();
+    label = (GtkLabel*) gtk_label_new("");
 
-    put(label, 0, 0);
+    set_label("Empty widget");
+    gtk_widget_set_size_request(GTK_WIDGET(base_class), 200, 200);
+
+    gtk_fixed_put(base_class, GTK_WIDGET(label), 0, 0);
 
     //event
-    gesture_drag = Gtk::GestureDrag::create();
-    add_controller(gesture_drag);
-
+    gesture_drag = (GtkGestureDrag*) gtk_gesture_drag_new();
+    gtk_widget_add_controller(GTK_WIDGET(base_class), GTK_EVENT_CONTROLLER(gesture_drag));
+ 
     //pressed event
-    gesture_drag->signal_drag_begin().connect(sigc::mem_fun(*this, &audio_widget::mouse_grab_callback));
-    gesture_drag->signal_drag_update().connect(sigc::mem_fun(*this, &audio_widget::mouse_grab_update_callback));  
+    g_signal_connect(gesture_drag, "drag-begin", G_CALLBACK(mouse_grab_callback), this);
+    g_signal_connect(gesture_drag, "drag-update", G_CALLBACK(mouse_grab_update_callback), this);
 
     ////add handler to mapped fixed_canvas
-    signal_map().connect(sigc::mem_fun(*this, &audio_widget::post_creation_callback));
+    g_signal_connect(base_class, "map", G_CALLBACK(_base_class_on_creation_callback), this);
+    g_signal_connect(base_class, "realize", G_CALLBACK(_base_class_post_creation_callback), this);
 
     //create css provider
-    css_provider = Gtk::CssProvider::create();
-    get_style_context()->add_provider(css_provider, GTK_STYLE_PROVIDER_PRIORITY_THEME);
+    css_provider = gtk_css_provider_new();
+    GtkStyleContext* sctx = gtk_widget_get_style_context(GTK_WIDGET(base_class));
+    gtk_style_context_add_provider(sctx, GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_THEME);
+
 
     isReady = false;
 }
 
-void audio_widget::mouse_grab_callback(int x, int y)
+void audio_widget::mouse_grab_callback(GtkGestureDrag* gdrag, double x, double y, audio_widget* widget)
 {
     //std::cout << "Pressed at (" << x << ", " << y << ")" << std::endl;
     //we only move on the top!
     if (y > 50)
-        ignore_mouse_drag = 1;
+        widget->ignore_mouse_drag = 1;
     else
-        ignore_mouse_drag = 0;
+        widget->ignore_mouse_drag = 0;
 }
 
-void audio_widget::mouse_grab_update_callback(int offset_x, int offset_y)
+void audio_widget::mouse_grab_update_callback(GtkGestureDrag* gdrag, double offset_x, double offset_y, audio_widget* widget)
 {
     double x = 500., y = 500.;
 
     //set_label("Moved!");
     
-    Gtk::Fixed* parent = (Gtk::Fixed*) this->get_parent();
-    parent->get_child_position(*this, x, y);
+    GtkFixed* parent = (GtkFixed*) gtk_widget_get_parent(GTK_WIDGET(widget->base_class));
+    gtk_fixed_get_child_position(parent, GTK_WIDGET(widget->base_class), &x, &y);
 
     //parent limits
     double parent_max_x, parent_max_y;
-    parent_max_x = parent->get_allocation().get_width();
-    parent_max_y = parent->get_allocation().get_height();
+    GtkAllocation palloc;
+    gtk_widget_get_allocation(GTK_WIDGET(parent), &palloc);
+    parent_max_x = palloc.width;
+    parent_max_y = palloc.height;
 
     x = std::max(std::min(x + offset_x, parent_max_x), 0.);
     y = std::max(std::min(y + offset_y, parent_max_y), 0.);
 
-    this->x_pos = x;
-    this->y_pos = y;
+    widget->x_pos = x;
+    widget->y_pos = y;
 
-    if(!ignore_mouse_drag)
+    if(!(widget->ignore_mouse_drag))
     {
-        parent->move(*this, x, y);
+        gtk_fixed_move(parent, GTK_WIDGET(widget->base_class), x, y);
 
         //update the position of the ports in the drawing ara
-        for(port* p : port_vector)
+        for(port* p : widget->port_vector)
         {
             //get the position of the port in the widget
             int port_x, port_y;
             p->get_position_inwidget(port_x, port_y);
 
             //if we are input, we are actually already on the border, if not we need the width of the label
-            int wid = (p->get_direction() == port::port_type::OUTPUT)? p->get_allocation().get_width() : 0;
+            int wid = (p->get_direction() == port::port_type::OUTPUT) ? p->get_allocation().width : 0;
 
             p->set_position_indarea(port_x + x + wid, port_y + y);
         }    
@@ -128,7 +133,7 @@ void audio_widget::add_port(port* p)
     //p->signal_show().connect(sigc::bind(sigc::mem_fun(*this, &audio_widget::on_port_realize), p));
 
     //need the size
-    p->create_pango_layout(p->get_text());
+    PangoLayout* playout = gtk_widget_create_pango_layout(GTK_WIDGET(p->get_base_class()), p->get_label().c_str());
 
     //place on the drawing
     if(p->get_direction() == port::port_type::OUTPUT)
@@ -137,10 +142,10 @@ void audio_widget::add_port(port* p)
         n_out_ports++;
 
         int position_x, position_y;
-        get_size_request(position_x, position_y);
+        gtk_widget_get_size_request(GTK_WIDGET(base_class), &position_x, &position_y);
 
         int wid, hei;
-        p->get_layout()->get_size(wid, hei);
+        pango_layout_get_size(playout, &wid, &hei);
 
         wid /= PANGO_SCALE;
         hei /= PANGO_SCALE;
@@ -148,7 +153,7 @@ void audio_widget::add_port(port* p)
         position_x -= wid;
         position_y = 10 + n_out_ports*20;
 
-        put(*p, position_x, position_y);
+        gtk_fixed_put(base_class, GTK_WIDGET(p->get_base_class()), position_x, position_y);
 
         p->set_position_inwidget(position_x, position_y);
 
@@ -161,12 +166,12 @@ void audio_widget::add_port(port* p)
         n_in_ports++;
 
         int position_x, position_y;
-        get_size_request(position_x, position_y);
+        gtk_widget_get_size_request(GTK_WIDGET(base_class), &position_x, &position_y);
 
         position_x = 0;
         position_y = 10 + n_in_ports*20;
 
-        put(*p, position_x, position_y);
+        gtk_fixed_put(base_class, GTK_WIDGET(p->get_base_class()), position_x, position_y);
         p->set_position_inwidget(position_x, position_y);
 
         //in drawing area
@@ -181,13 +186,17 @@ std::vector<port*>* audio_widget::get_port_list()
 
 void audio_widget::get_underlaying_fixed_position(int& x, int& y)
 {
-    x = get_allocation().get_x();
-    y = get_allocation().get_y();
+    GtkAllocation alloc;
+    gtk_widget_get_allocation(GTK_WIDGET(base_class), &alloc);
+
+    x = alloc.x;
+    y = alloc.y;
 }
 
 void audio_widget::on_port_realize(port* p)
 {
-    Gtk::Fixed* fixed_parent = (Gtk::Fixed*) p->get_parent();
+    //Gtk::Fixed* fixed_parent = (Gtk::Fixed*) p->get_parent();
+    //GtkFixed
 
     //int fixed_x = fixed_canvas.get_allocation().get_x();
     //int fixed_y = fixed_canvas.get_allocation().get_y();
@@ -195,13 +204,18 @@ void audio_widget::on_port_realize(port* p)
 
 void audio_widget::set_label(std::string label)
 {
-    this->label.set_label(label);
+    gtk_label_set_text(this->label, label.c_str());
 }
 
 void audio_widget::set_css_style(std::string filename, std::string css_class)
 {
-    css_provider->load_from_path("styles/" + filename);
-    add_css_class(css_class);
+    gtk_css_provider_load_from_path(css_provider, ("styles/" + filename).c_str());
+    gtk_widget_add_css_class(GTK_WIDGET(base_class), css_class.c_str());
+}
+
+void audio_widget::set_size_request(int w, int h)
+{
+    gtk_widget_set_size_request(GTK_WIDGET(base_class), w, h);
 }
 
 void audio_widget::set_ready(bool ready)
@@ -212,4 +226,198 @@ void audio_widget::set_ready(bool ready)
 bool audio_widget::is_ready()
 {
     return isReady;
+}
+
+void audio_widget::_base_class_post_creation_callback(GtkFixed* fxd, audio_widget* widget)
+{
+    widget->post_creation_callback();
+}
+
+void audio_widget::_base_class_on_creation_callback(GtkFixed* fxd, audio_widget* widget)
+{
+    widget->on_creation_callback();
+}
+
+void audio_widget::add_control(control_type type, std::string name, std::string parameter)
+{
+    ui_control new_control;
+
+    //fill the struct
+    new_control.name = name;
+    new_control.text = name;
+    new_control.type = type;
+    new_control.parameter_index = find_parameter_id(parameter);
+    new_control.max_value = 1.0;
+    new_control.min_value = 0.0;
+    new_control.step = 0.1;
+
+    //create the control
+    switch(type)
+    {
+        case control_type::label:
+        {
+            new_control.widget = gtk_label_new(name.c_str());
+            break;
+        }
+
+        case control_type::scale:
+        {
+            new_control.widget = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, new_control.min_value, new_control.max_value, new_control.step);
+
+            //assign the callback
+            g_signal_connect(new_control.widget, "value-changed", G_CALLBACK(_base_class_scale_control_callback), this);
+        }
+    }
+
+    //push the control
+    int size = control_list.size();
+    control_list.push_back(new_control);
+
+    //put the widget
+    gtk_widget_set_size_request(GTK_WIDGET(new_control.widget), 150, 50);
+    gtk_fixed_put(base_class, GTK_WIDGET(new_control.widget), 15, 30 + size*55);
+}
+
+void audio_widget::set_control_text(std::string name, std::string text)
+{
+    //this should be refactored into mini structs
+    for(ui_control& control : control_list)
+    {
+        if(control.name == name)
+        {
+            control.text = text;
+            
+            switch(control.type)
+            {
+                case control_type::label:
+                {
+                    gtk_label_set_label(GTK_LABEL(control.widget), text.c_str());
+                    break;
+                }
+            }
+        }
+    }
+}
+
+bool audio_widget::find_control_id(std::string name, int& id)
+{
+    for(auto i = control_list.begin(); i < control_list.end(); i++)
+    {
+        if(i->name.compare(name) == 0)
+        {
+            id = i - control_list.begin();
+            return true;
+        }
+    }
+    return false;
+}
+
+int audio_widget::find_parameter_id(std::string name)
+{
+    for(auto i = parameter_list.begin(); i < parameter_list.end(); i++)
+    {
+        if(i->name.compare(name) == 0)
+        {
+            return  i - parameter_list.begin();
+        }
+    }
+    return -1;
+}
+
+void audio_widget::add_parameter(std::string name, float starting_value)
+{
+    parameter_list.push_back({name, starting_value});
+}
+
+bool audio_widget::find_control_by_widget_pointer(GtkWidget* widget, ui_control& control)
+{
+    for(ui_control ctrl : control_list)
+    {
+        if(widget == ctrl.widget)
+        {
+            control = ctrl;
+            return true;
+        }
+    }
+    return false;
+}
+
+void audio_widget::_base_class_scale_control_callback(GtkRange* scale, audio_widget* widget)
+{
+    //find the control
+    ui_control ctrl;
+    if(widget->find_control_by_widget_pointer(GTK_WIDGET(scale), ctrl))
+    {
+        int idx = ctrl.parameter_index;
+        widget->parameter_list.at(idx).value = gtk_range_get_value(GTK_RANGE(scale));
+    }
+}
+
+float audio_widget::get_parameter_value(std::string name)
+{
+    return parameter_list.at(find_parameter_id(name)).value;
+}
+
+void audio_widget::_base_class_process()
+{
+    //lets first do the linking and then only pass onto the processing 
+    for(link l : link_list)
+    {
+        port* p = port_vector.at(l.port_id);
+        ui_control& ui = control_list.at(l.control_id);
+
+        parameter_list.at(ui.parameter_index).value = p->pop_sample();
+        control_match_to_param(ui);
+    }
+}
+
+bool audio_widget::find_port(std::string name, port ** out)
+{
+    for(auto i = port_vector.begin(); i < port_vector.end(); i++)
+    {
+        port* p = *i;
+        if(p->get_label().compare(name) == 0)
+        {
+            *out = p;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool audio_widget::find_port_id(std::string name, int& id)
+{
+    for(auto i = port_vector.begin(); i < port_vector.end(); i++)
+    {
+        if((*i)->get_label().compare(name) == 0)
+        {
+            id = i - port_vector.begin();
+            return true;
+        }
+    }
+    return false;
+}
+
+void audio_widget::control_match_to_param(ui_control& ui)
+{
+    float val = parameter_list.at(ui.parameter_index).value;
+    switch(ui.type)
+    {
+        case control_type::scale:
+        {
+            gtk_range_set_value(GTK_RANGE(ui.widget), val);
+            break;
+        }
+    }
+}
+
+void audio_widget::link_port_to_control(std::string linkname, std::string port, std::string control)
+{
+    int port_id;
+    int control_id;
+    if(!find_port_id(port, port_id)) return;
+    if(!find_control_id(control, control_id)) return;
+
+    link_list.push_back({linkname, port_id, control_id});
 }

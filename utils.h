@@ -24,4 +24,5 @@ class utils
 {
     public:
         static std::string gen_8char_id();
+        static std::string gen_16char_id();
 };

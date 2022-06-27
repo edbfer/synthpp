@@ -17,19 +17,8 @@
 
 #pragma once
 
-#include <gtkmm/window.h>
-#include <gtkmm/grid.h>
-#include <gtkmm/fixed.h>
-#include <gtkmm/paned.h>
-#include <gtkmm/label.h>
-#include <gtkmm/textview.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/scrolledwindow.h>
-#include <gtkmm/button.h>
-#include <gtkmm/drawingarea.h>
-#include <gtkmm/dropdown.h>
-#include <gtkmm/comboboxtext.h>
-#include <gtkmm/headerbar.h>
+#include <gtk/gtk.h>
+#include <adwaita.h>
 
 #include <vector>
 #include <string>
@@ -38,16 +27,20 @@
 #include "signal_path.h"
 #include "audio_engine.h"
 #include "port.h"
+#include "midi_options_dialog.h"
 
 // Mainwindow class
 //
-class MainWindow : public Gtk::Window 
+class MainWindow
 {
-
     public:
 
         //constructor
         MainWindow();
+        ~MainWindow();
+
+        //create layout
+        static void create_layout(GtkApplication* app, MainWindow* window);
 
         //playfield functions
         void playfield_add_widget(audio_widget* awidget);
@@ -58,64 +51,79 @@ class MainWindow : public Gtk::Window
         std::vector<signal_path*>& get_signal_path_list();
     
     protected:
-        Gtk::Grid main_grid;
+
+        GtkWindow* main_window;
+        //GtkPaned* main_grid;
+        AdwFlap* main_grid;
+        GtkSeparator* right_separator;
+        AdwClamp* right_size_clamp;
         
-        Gtk::ScrolledWindow playfield_scroll;
-        Gtk::Fixed playfield;
+        GtkScrolledWindow* playfield_scroll;
+        GtkFixed* playfield;
 
         //add menu buttons
-        Gtk::HeaderBar header_bar;
-        Gtk::Button hbar_midi_options_button;
-        //associated actions
-        void hbar_midi_options_button_clicked();
+        GtkHeaderBar* header_bar;
+        GtkButton* hbar_midi_options_button;
+        GtkToggleButton* hbar_collapse_panel;
 
-        Gtk::DrawingArea playfield_aux_darea;
+        //associated actions
+        midi_options_dialog* midi_dialog = NULL;
+        static void hbar_midi_options_button_clicked(GtkButton* btn, MainWindow* window);
+        static void hbar_collapse_panel_button_toggled(GtkToggleButton* btn, MainWindow* window);
+
+        GtkDrawingArea* playfield_aux_darea;
         bool darea_mouse_grabbed;
         double darea_start_mouse_x, darea_start_mouse_y;
         double darea_cur_mouse_x, darea_cur_mouse_y;
 
-        Gtk::Grid right_panel;
-        Gtk::Label log_label;
-        Gtk::TextView log_panel;
+        int last_sidebar_position;
+        GtkBox* right_panel;
+        GtkLabel* log_label;
+        GtkTextView* log_panel;
 
         //widget list
-        Gtk::ComboBoxText widget_catalog;
-        Gtk::ComboBoxText audio_device_catalog;
-        void audio_device_catalog_changed();
+        GtkComboBoxText* widget_catalog;
+        GtkComboBoxText* audio_device_catalog;
+        static void audio_device_catalog_changed(GtkComboBox* cbx, MainWindow* window);
         
         //function to write on the log window
         void log(std::string text);
 
-        Gtk::ScrolledWindow log_panel_scroll;
+        GtkScrolledWindow* log_panel_scroll;
 
         //buttons
-        Gtk::Button test_button;
+        GtkButton* test_button;
 
         //start audioengine button
-        Gtk::Button start_engine_button;
-        Gtk::Button stop_engine_button;
+        GtkButton* start_engine_button;
+        GtkButton* stop_engine_button;
+        //Engine buttons in the header bar
+        GtkToggleButton* hbar_start_engine;
+        static void hbar_start_engine_button_toggled(GtkToggleButton* btn, MainWindow* window);
+        GtkButton* hbar_stop_engine;
+        static void hbar_stop_engine_button_clicked(GtkButton* btn, MainWindow* window);
 
         //playfield list
         std::vector<audio_widget*> playfield_widget_list;
 
-        void test_button_clicked_callback(); 
-        void start_engine_button_clicked_callback();   
-        void stop_engine_button_clicked_callback();  
-        void playfield_aux_darea_draw(const Glib::RefPtr<Cairo::Context> cairo_context, int width, int height);
+        static void test_button_clicked_callback(GtkButton* btn, MainWindow* window); 
+        static void start_engine_button_clicked_callback(GtkButton* btn, MainWindow* window);   
+        static void stop_engine_button_clicked_callback(GtkButton* btn, MainWindow* window);  
+        static void playfield_aux_darea_draw(GtkDrawingArea *area, cairo_t *cr, int width, int height, MainWindow* window);
 
-        void scrolled_edge_reached(Gtk::PositionType pos_type);
-        void mainwindow_show_callback();
-        void gdk_surface_layout_callback(int width, int height);
+        static void scrolled_edge_reached(GtkScrolledWindow* self, GtkPositionType pos, MainWindow* window);
+        static void mainwindow_show_callback(GtkWindow* w, MainWindow* window);
+        static void gdk_surface_layout_callback(GdkSurface* sfc, int width, int height, MainWindow* window);
 
         bool do_redraw;
-        bool playfield_signal_redraw();
+        static bool playfield_signal_redraw(MainWindow* window);
         
-        void playfield_aux_darea_begin_grab(double x, double y);
-        void playfield_aux_darea_update_grab(double offset_x, double offset_y);
-        void playfield_aux_darea_end_grab(double x, double y);
-        void playfield_aux_darea_motion(double x, double y);
-        bool playfield_aux_darea_key_down(guint keyval, guint keycode, Gdk::ModifierType state);
-        void playfield_aux_darea_key_up(guint keyval, guint keycode, Gdk::ModifierType state);
+        static void playfield_aux_darea_begin_grab(GtkGestureDrag* ges, double x, double y, MainWindow* window);
+        static void playfield_aux_darea_update_grab(GtkGestureDrag* ges, double offset_x, double offset_y, MainWindow* window);
+        static void playfield_aux_darea_end_grab(GtkGestureDrag* ges, double x, double y, MainWindow* window);
+        static void playfield_aux_darea_motion(GtkEventControllerMotion* ecm, double x, double y, MainWindow* window);
+        static bool playfield_aux_darea_key_down(GtkEventControllerKey* eck, guint keyval, guint keycode, GdkModifierType state, MainWindow* window);
+        static void playfield_aux_darea_key_up(GtkEventControllerKey* eck, guint keyval, guint keycode, GdkModifierType state, MainWindow* window);
 
         //tentative path
         bool can_create_path;

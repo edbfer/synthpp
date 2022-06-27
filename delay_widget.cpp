@@ -17,9 +17,11 @@
 
 #include "delay_widget.h"
 
-#include <gtkmm/adjustment.h>
-
 delay_widget::delay_widget(context* program_context) : audio_widget(program_context, 300, 300)
+{
+}
+
+void delay_widget::on_creation_callback()
 {
     set_label("Slap-Back");
     set_css_style("widget.css", "widget");
@@ -32,35 +34,37 @@ delay_widget::delay_widget(context* program_context) : audio_widget(program_cont
 
     //create circular buffer
     //at most, we have enough for one second of audio
-    cbuffer = boost::circular_buffer<float>(44100, 0.f);
+    last_size = 10;
+    cbuffer = boost::circular_buffer<float>(10, 0.f);
 
-    //create the control
-    n_samples_picker.set_digits(0);
-    n_samples_picker.set_orientation(Gtk::Orientation::VERTICAL);
-    n_samples_picker.set_draw_value(true);
-    n_samples_picker.set_size_request(-1, 300);
+    // //create the control
+    // n_samples_picker.set_digits(0);
+    // n_samples_picker.set_orientation(Gtk::Orientation::VERTICAL);
+    // n_samples_picker.set_draw_value(true);
+    // n_samples_picker.set_size_request(-1, 300);
 
-    Glib::RefPtr<Gtk::Adjustment> adj = n_samples_picker.get_adjustment();
-    adj->set_value(44099);
-    adj->set_upper(44100);
-    adj->set_lower(1);
-    adj->set_step_increment(5);
+    // Glib::RefPtr<Gtk::Adjustment> adj = n_samples_picker.get_adjustment();
+    // adj->set_value(44099);
+    // adj->set_upper(44100);
+    // adj->set_lower(1);
+    // adj->set_step_increment(5);
 
-    put(n_samples_picker, 10, 10);
+    // put(n_samples_picker, 10, 10);
 
-    n_samples_picker.signal_value_changed().connect(sigc::mem_fun(*this, &delay_widget::n_samples_picker_value_changed));
-}
-
-void delay_widget::n_samples_picker_value_changed()
-{
-    //get current value of samples
-    int nsamples = (int) n_samples_picker.get_value();
-
-    cbuffer.rresize(nsamples, 0.f);
+    // n_samples_picker.signal_value_changed().connect(sigc::mem_fun(*this, &delay_widget::n_samples_picker_value_changed));
+    add_parameter("nsamp", 10.f);
+    add_control(control_type::scale, "nsamp_scale", "nsamp");
 }
 
 void delay_widget::process()
 {
+    int new_size = get_parameter_value("nsamp");
+    if(new_size != last_size)
+    {
+        cbuffer.rresize(new_size, 0.f);
+        last_size = new_size;
+    }
+
     //get value at input port
     float sample = input_port->pop_sample();
 

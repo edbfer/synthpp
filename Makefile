@@ -16,24 +16,40 @@
 # along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
 CC = g++
+MAKE = make
 
-PKGCONF_INCLUDES = $(shell pkg-config gtkmm-4.0 -cflags)
-PKGCONF_LIBS = $(shell pkg-config gtkmm-4.0 -libs)
+PKGCONF_INCLUDES = $(shell pkg-config gtk4 libadwaita-1 sigc++-3.0 -cflags)
+PKGCONF_LIBS = $(shell pkg-config gtk4 libadwaita-1 sigc++-3.0 -libs)
 
-PORTAUDIO_LIBS = -lportaudio -lportmidi -lporttime
+PORTAUDIO_LIBS = -lportaudio -lportmidi -lporttime -ldl
 
-OBJECTS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o midi_widget.o midi_options_dialog.o
-TARGET = synthpp
+
+FILE_PARSING_DIR = file_parsing/
+
+SUBDIRS = $(FILE_PARSING_DIR)/file_parsing.o
+
+MAINDIRS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o midi_options_dialog.o 
+
+OBJECTS = $(MAINDIRS)
+
+TARGET = output/synthpp
 
 CFLAGS = -O0 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
-LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) -fno-stack-protector -pthread
+LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) -fno-stack-protector -pthread -rdynamic
 
 all: $(OBJECTS) $(TARGET)
+	mkdir -p output/plugins
+	cp *.sppp output/plugins || :
+
+plugins: $(PLUGINS)
+
+file_parsing.o:
+	$(MAKE) -C $(FILE_PARSING_DIR)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET)
 
-main.o: main.cpp
+main.o: main.cpp mainwindow.h
 	$(CC) $(CFLAGS) -c main.cpp -o main.o
 
 %.o: %.cpp %.h
@@ -42,5 +58,8 @@ main.o: main.cpp
 clean:
 	rm $(OBJECTS) $(TARGET)
 
+debug: $(TARGET)
+	G_DEBUG=fatal-criticals $(TARGET)
+
 run: $(TARGET)
-	$(TARGET)
+	G_DEBUG=fatal-criticals $(TARGET)

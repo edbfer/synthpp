@@ -15,33 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
-
-#include "context.h"
-#include "audio_widget.h"
-#include "port.h"
+//class that implements wavetables
 
 #include <boost/circular_buffer.hpp>
 
-//this simple plugin implements a simple slap-back echo of the selected number of samples
-
-class delay_widget : public audio_widget
+class wavetable
 {
+
     public:
-        delay_widget(context* program_context);
 
-        void on_creation_callback();
-
-        void process();
-        void process_ui();
-        void post_creation_callback();
+        wavetable(int nsamples);
 
     protected:
-        boost::circular_buffer<float> cbuffer;
 
-        int last_size;
+        int nsamples;
 
-        //input, output port
-        port* input_port, *output_port;
-
-};
+}

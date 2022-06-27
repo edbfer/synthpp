@@ -5,8 +5,17 @@
 #object files
 *.o
 
+#TODOs
+file_parsing/*
+
+#plugins
+*.sppp
+
 #target
 synthpp
+output/
+output/*
 
 #core dumps
 vgcore*
+

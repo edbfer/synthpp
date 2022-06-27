@@ -18,28 +18,30 @@
 #include "counter_widget.h"
 #include "port.h"
 
-#include <gtkmm/adjustment.h>
-
-counter_widget::counter_widget(context* program_context, int nports) : audio_widget(program_context)
+counter_widget::counter_widget(context* program_context, int nports) : audio_widget(program_context), nports(nports)
 {
-    this->nports = nports;
+}
 
+void counter_widget::on_creation_callback()
+{   
     set_label("Counter: " + std::to_string(nports) + " bits");
     set_css_style("widget.css", "widget");
 
-    freq_scale.set_digits(0);
-    freq_scale.set_orientation(Gtk::Orientation::VERTICAL);
-    freq_scale.set_draw_value(true);
-    freq_scale.set_size_request(-1, 300);
-    freq_scale.signal_value_changed().connect(sigc::mem_fun(*this, &freq_scale_value_changed));
+    // freq_scale.set_digits(0);
+    // freq_scale.set_orientation(Gtk::Orientation::VERTICAL);
+    // freq_scale.set_draw_value(true);
+    // freq_scale.set_size_request(-1, 300);
+    // freq_scale.signal_value_changed().connect(sigc::mem_fun(*this, &freq_scale_value_changed));
 
-    Glib::RefPtr<Gtk::Adjustment> adj = freq_scale.get_adjustment();
-    adj->set_value(100);
-    adj->set_upper(250);
-    adj->set_lower(1);
-    adj->set_step_increment(5);
+    // Glib::RefPtr<Gtk::Adjustment> adj = freq_scale.get_adjustment();
+    // adj->set_value(100);
+    // adj->set_upper(250);
+    // adj->set_lower(1);
+    // adj->set_step_increment(5);
 
-    put(freq_scale, 10, 10);
+    // put(freq_scale, 10, 10);
+    add_parameter("freq", 100);
+    add_control(control_type::scale, "freq_scale", "freq");
 
     //create as many nports as wanted
     for(int i = 0; i < nports; i++)
@@ -57,7 +59,7 @@ void counter_widget::process()
     // i % 2 = 0-> 2500Hz
     // i % 5 = 0-> 1000Hz
     // i % 100 = 0 -> 50Hz
-    int step = 5000 / int(std::max(frequency, 1.f));
+    int step = 5000 / int(std::max(get_parameter_value("freq"), 1.f));
     ticks++;
 
     if(ticks % step == 0)
@@ -71,11 +73,6 @@ void counter_widget::process()
 
         p->push_sample((i == active_port) ? 1. : 0.);
     }
-}
-
-void counter_widget::freq_scale_value_changed()
-{
-    frequency = freq_scale.get_value();
 }
 
 void counter_widget::post_creation_callback()

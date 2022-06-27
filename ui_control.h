@@ -17,31 +17,27 @@
 
 #pragma once
 
-#include "context.h"
-#include "audio_widget.h"
-#include "port.h"
+#include <string>
 
-#include <boost/circular_buffer.hpp>
+#include <gtk/gtklabel.h>
+#include <gtk/gtkbutton.h>
+#include <gtk/gtkscale.h>
 
-//this simple plugin implements a simple slap-back echo of the selected number of samples
+enum control_type{
+    label,
+    button,
+    scale
+};
 
-class delay_widget : public audio_widget
-{
-    public:
-        delay_widget(context* program_context);
+struct ui_control{
+    std::string name;
+    control_type type;
+    int parameter_index;
 
-        void on_creation_callback();
+    GtkWidget* widget;
 
-        void process();
-        void process_ui();
-        void post_creation_callback();
-
-    protected:
-        boost::circular_buffer<float> cbuffer;
-
-        int last_size;
-
-        //input, output port
-        port* input_port, *output_port;
-
+    std::string text;
+    float max_value;
+    float min_value;
+    float step;
 };

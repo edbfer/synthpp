@@ -19,18 +19,15 @@
 
 #include "port.h"
 #include "context.h"
+#include "ui_control.h"
 
 #include <iostream>
+#include <fstream>
 #include <string>
 
-#include <gtkmm/frame.h>
-#include <gtkmm/label.h>
-#include <gtkmm/fixed.h>
-#include <gtkmm/gesturedrag.h>
-#include <gtkmm/cssprovider.h>
+#include <gtk/gtk.h>
 
-
-class audio_widget : public Gtk::Fixed
+class audio_widget
 {
 
     public:
@@ -38,9 +35,12 @@ class audio_widget : public Gtk::Fixed
         audio_widget(context* program_context, int x_pos = 300, int y_pos = 300);
         ~audio_widget();
 
+        //this function is called when the audio_widget is created via the constructor
+        virtual void on_creation_callback() = 0;
+
         //this function is called each time the audio_widget is placed onto the playfield, so that
         //all childs are already laid out and realized
-        virtual void post_creation_callback() {}
+        virtual void post_creation_callback() = 0;
 
         //this function is called for each sample calculated
         virtual void process() {}
@@ -48,29 +48,78 @@ class audio_widget : public Gtk::Fixed
         //this function is called independently for updating the ui in the ui thread
         virtual void process_ui() {}
 
+        //UI PART
+        void add_control(control_type type, std::string name, std::string parameter_name);
+        void set_control_text(std::string name, std::string text);
+        bool find_control_by_widget_pointer(GtkWidget* widget, ui_control& control);
+        bool find_control_id(std::string name, int& id);
+        void link_port_to_control(std::string linkname, std::string port, std::string control);
+        void control_match_to_param(ui_control& ui);
+
+        //PARAMETERS
+        void add_parameter(std::string name, float starting_val);
+        float get_parameter_value(std::string name);
+        int find_parameter_id(std::string name);
+
+        //settings
+        //these go on the sidebar, not on the playfield ui, and there are more kinds!
+
         //get frame for UI
         void get_underlaying_fixed_position(int& x, int& y);
         
-        //css
+        //widget appearance
         void set_css_style(std::string filename, std::string css_class);
-
-        //set label
         void set_label(std::string label);
+        void set_size_request(int w, int h);
 
         //add port
         void add_port(port* p);
         std::vector<port*>* get_port_list();
+        bool find_port(std::string name, port ** p);
+        bool find_port_id(std::string name, int& id);
 
         //set ready state
         void set_ready(bool ready);
         bool is_ready();
 
-    protected: 
+        GtkFixed* base_class;
+
+    private: 
+
+        struct serialize_container{
+            char widget_id[48];
+            char title[48];
+            int x_pos;
+            int y_pos;
+            int n_params;
+            int n_ports;
+            int n_controls;
+            int n_links;
+        };
+
+        struct serialize_port{
+            int index;
+            char name[48];
+            port::port_type type;
+        };
+
+        struct parameter{
+            std::string name;
+            float value;
+        };
+
+        struct link{
+            std::string name;
+            int port_id;
+            int control_id;
+        };
+
+        //audio_widget 
+        std::string widget_id;
 
         //pointer
-        Glib::RefPtr<Gtk::GestureDrag> gesture_drag;
-
-        Gtk::Label label;
+        GtkGestureDrag* gesture_drag;
+        GtkLabel* label;
 
         int ignore_mouse_drag;
 
@@ -78,10 +127,20 @@ class audio_widget : public Gtk::Fixed
         bool isReady;
 
         //child frame
-        void mouse_grab_callback(int x, int y);
-        void mouse_grab_update_callback(int offset_x, int offset_y);
+        static void mouse_grab_callback(GtkGestureDrag* gdrag, double x, double y, audio_widget* widget);
+        static void mouse_grab_update_callback(GtkGestureDrag* gdrag, double offset_x, double offset_y, audio_widget* widget);
+
+        //events handling interface
+        void _base_class_process();
+        static void _base_class_post_creation_callback(GtkFixed* fxd, audio_widget* widget);
+        static void _base_class_on_creation_callback(GtkFixed* fxd, audio_widget* widget);
+        static void _base_class_button_control_callback(GtkButton* btn, audio_widget* widget);
+        static void _base_class_scale_control_callback(GtkRange* scale, audio_widget* widget);
 
         std::vector<port*> port_vector;
+        std::vector<ui_control> control_list;
+        std::vector<parameter> parameter_list;
+        std::vector<link> link_list;
 
         //number of ports
         int n_out_ports = 0;
@@ -94,8 +153,11 @@ class audio_widget : public Gtk::Fixed
         int y_pos = 0;
 
         //css provider
-        Glib::RefPtr<Gtk::CssProvider> css_provider;
+        GtkCssProvider* css_provider;
 
         //context
         context* program_context;
+
+        //file writing
+        void serialize(std::ofstream& str);
 };

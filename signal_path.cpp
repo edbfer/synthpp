@@ -31,8 +31,8 @@ signal_path::signal_path(port* source, port* dest)
 
 signal_path::~signal_path()
 {
-    source_port->set_connected(false);
-    destination_port->set_connected(false);
+    if(source_port != nullptr) source_port->set_connected(false);
+    if(destination_port != nullptr) destination_port->set_connected(false);
 }
 
 port* signal_path::get_source_port()

@@ -18,10 +18,13 @@
 #include <string>
 #include "source_widget.h"
 
-source_widget::source_widget(int nports) : audio_widget(300, 300)
+source_widget::source_widget(context* program_context, int nports) : audio_widget(program_context, 300, 300)
 {
     this->nports = nports;
+}
 
+void source_widget::on_creation_callback()
+{
     set_label("From Audio device");
     set_css_style("widget.css", "widget");
 

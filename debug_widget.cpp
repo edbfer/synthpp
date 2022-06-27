@@ -19,9 +19,9 @@
 
 #include <string>
 #include <iostream>
-#include <gtkmm/cssprovider.h>
+#include <gtk/gtk.h>
 
-debug_widget::debug_widget(context* program_context, int x_pos, int y_pos) : audio_widget(program_context, x_pos, y_pos)
+void debug_widget::on_creation_callback()
 {
     set_label("Debug Widget!");
     set_size_request(250, 150);
@@ -38,19 +38,17 @@ debug_widget::debug_widget(context* program_context, int x_pos, int y_pos) : aud
         add_port(p);
     }
 
-    signal_show().connect(sigc::mem_fun(*this, &debug_widget::post_creation_callback));
-
     set_css_style("widget.css", "widget");
 
     //create the counter
-    put(tick_counter_label, 75, 75);
-    tick_counter_label.set_text(std::to_string(0));
+    add_control(control_type::label, "tick_label", "");
+
     ticks = 0;
+    set_control_text("tick_label", std::to_string(ticks));
 }
 
 void debug_widget::post_creation_callback()
 {
-   //std::cout << "putas" << std::endl;
    set_ready(true);
 }
 
@@ -62,5 +60,5 @@ void debug_widget::process()
 void debug_widget::process_ui()
 {
     //if(ticks % 1000 == 0) 
-    tick_counter_label.set_text(std::to_string(ticks));
+    set_control_text("tick_label", std::to_string(ticks));
 }
