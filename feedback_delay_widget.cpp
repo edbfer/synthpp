@@ -17,7 +17,12 @@
 
 #include "feedback_delay_widget.h"
 
-feedback_delay_widget::feedback_delay_widget(context* program_context) : audio_widget(program_context)
+audio_widget* feedback_delay_widget::create_instance()
+{
+    return new feedback_delay_widget();
+}
+
+feedback_delay_widget::feedback_delay_widget() : audio_widget()
 {
 }
 

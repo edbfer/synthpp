@@ -22,7 +22,7 @@
 class sink_widget : public audio_widget
 {
     public:
-        sink_widget(context* program_context, int nports);
+        sink_widget(int nports);
         ~sink_widget();
 
         void on_creation_callback();

@@ -26,13 +26,15 @@
 class probe_widget : public audio_widget
 {
     public:
-        probe_widget(context* program_context);
+        probe_widget();
 
         void on_creation_callback();
 
         void process();
         void process_ui();
         void post_creation_callback();
+
+        static audio_widget* create_instance();
 
     protected:
 

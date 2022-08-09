@@ -21,8 +21,13 @@
 #include <sstream>
 #include <iomanip>
 
-probe_widget::probe_widget(context* program_context) :
-    audio_widget(program_context)
+audio_widget* probe_widget::create_instance()
+{
+    return new probe_widget;
+}
+
+probe_widget::probe_widget() :
+    audio_widget()
 {
 }
 

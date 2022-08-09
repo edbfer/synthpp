@@ -24,11 +24,10 @@
 
 #include "audio_widget.h"
 
-audio_widget::audio_widget(context* program_context, int x_pos, int y_pos)
+audio_widget::audio_widget(int x_pos, int y_pos)
 {
     this->x_pos = x_pos;
     this->y_pos = y_pos;
-    this->program_context = program_context;
 
     base_class = (GtkFixed*) gtk_fixed_new();
     label = (GtkLabel*) gtk_label_new("");

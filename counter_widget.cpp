@@ -18,7 +18,20 @@
 #include "counter_widget.h"
 #include "port.h"
 
-counter_widget::counter_widget(context* program_context, int nports) : audio_widget(program_context), nports(nports)
+audio_widget* counter_widget::create_instance_4()
+{
+    return new counter_widget(4);
+}
+audio_widget* counter_widget::create_instance_8()
+{
+    return new counter_widget(8);
+}
+audio_widget* counter_widget::create_instance_16()
+{
+    return new counter_widget(16);
+}
+
+counter_widget::counter_widget(int nports) : audio_widget(), nports(nports)
 {
 }
 

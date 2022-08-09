@@ -15,35 +15,28 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+#include "widget_manager.h"
 
-#include "context.h"
-#include "audio_widget.h"
-#include "port.h"
-
-#include <boost/circular_buffer.hpp>
-
-//this simple plugin implements a simple slap-back echo of the selected number of samples
-
-class delay_widget : public audio_widget
+audio_widget* widget_manager::create_widget(std::string name)
 {
-    public:
-        delay_widget();
+    for(auto it = widget_database.begin(); it < widget_database.end(); it++)
+    {
+        if(it->name == name)
+        {
+            //load
+            return it->creator_function();
+        }
+    }
+    return nullptr;
+}
 
-        void on_creation_callback();
-
-        void process();
-        void process_ui();
-        void post_creation_callback();
-
-        static audio_widget* create_instance();
-
-    protected:
-        boost::circular_buffer<float> cbuffer;
-
-        int last_size;
-
-        //input, output port
-        port* input_port, *output_port;
-
-};
+void widget_manager::register_widget(std::string name, std::string long_name, std::string description, audio_widget* (*creator_function)())
+{
+    //check if it exists first
+    for(auto it = widget_database.begin(); it < widget_database.end(); it++)
+    {
+        if(it->name == name)
+            return;
+    }
+    widget_database.push_back({name, long_name, description, creator_function});
+}

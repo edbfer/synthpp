@@ -27,6 +27,7 @@
 
 //main UI
 #include "mainwindow.h"
+#include "settings_manager.h"
 
 //load plugins
 //dynamic lib stuff
@@ -40,10 +41,9 @@ int main(int argc, char ** argv)
 {
     AdwApplication* application = NULL;
 
-    MainWindow window;
-
     //g_log_set_always_fatal(G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING);
     //g_setenv("G_DEBUG", "fatal-criticals", true);
+    MainWindow window;
 
     application = adw_application_new("org.edbfer.syntpp", G_APPLICATION_FLAGS_NONE);
     g_signal_connect(application, "activate", G_CALLBACK(MainWindow::create_layout), &window);

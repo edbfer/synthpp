@@ -17,33 +17,23 @@
 
 #pragma once
 
-#include "context.h"
+#include <string>
 #include "audio_widget.h"
-#include "port.h"
+#include <vector>
 
-#include <boost/circular_buffer.hpp>
-
-//this simple plugin implements a simple slap-back echo of the selected number of samples
-
-class delay_widget : public audio_widget
+class widget_manager
 {
     public:
-        delay_widget();
+        audio_widget* create_widget(std::string name);
+        void register_widget(std::string name, std::string long_name, std::string description, audio_widget* (*creator_function) ());
 
-        void on_creation_callback();
-
-        void process();
-        void process_ui();
-        void post_creation_callback();
-
-        static audio_widget* create_instance();
-
-    protected:
-        boost::circular_buffer<float> cbuffer;
-
-        int last_size;
-
-        //input, output port
-        port* input_port, *output_port;
-
+    private:
+        struct widget_entry
+        {
+            std::string name;
+            std::string long_name;
+            std::string description;
+            audio_widget* (*creator_function) ();
+        };
+        std::vector<widget_entry> widget_database;
 };

@@ -32,7 +32,7 @@ class audio_widget
 
     public:
 
-        audio_widget(context* program_context, int x_pos = 300, int y_pos = 300);
+        audio_widget(int x_pos = 300, int y_pos = 300);
         ~audio_widget();
 
         //this function is called when the audio_widget is created via the constructor

@@ -21,7 +21,7 @@
 #include <chrono>
 #include <cstring>
 
-audio_engine::audio_engine(std::vector<audio_widget*>* widget_list, std::vector<signal_path*>* path_list, context* program_context)
+audio_engine::audio_engine(context* program_context, std::vector<audio_widget*>* widget_list, std::vector<signal_path*>* path_list)
 {
     this->widget_list = widget_list;
     this->path_list = path_list;
@@ -71,8 +71,8 @@ audio_engine::audio_engine(std::vector<audio_widget*>* widget_list, std::vector<
     }
 
     //add our functions to the context object
-    program_context->get_midi_active_devices = sigc::mem_fun(*this, &get_midi_active_devices);
-    program_context->register_midi_consumer = sigc::mem_fun(*this, &register_midi_consumer);
+    //program_context->get_midi_active_devices = sigc::mem_fun(*this, &get_midi_active_devices);
+    //program_context->register_midi_consumer = sigc::mem_fun(*this, &register_midi_consumer);
 }
 
 void audio_engine::set_current_device(int id)
@@ -96,8 +96,8 @@ void audio_engine::set_current_device(int id)
         program_context->remove_widget(sink);
         delete sink;
     }
-    source = new source_widget(program_context, current_device->maxInputChannels);
-    sink = new sink_widget(program_context, current_device->maxOutputChannels);
+    source = new source_widget(current_device->maxInputChannels);
+    sink = new sink_widget(current_device->maxOutputChannels);
 
     program_context->put_widget(source);
     program_context->put_widget(sink);

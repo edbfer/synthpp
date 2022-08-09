@@ -17,7 +17,12 @@
 
 #include "delay_widget.h"
 
-delay_widget::delay_widget(context* program_context) : audio_widget(program_context, 300, 300)
+audio_widget* delay_widget::create_instance()
+{
+    return new delay_widget();
+}
+
+delay_widget::delay_widget() : audio_widget(300, 300)
 {
 }
 

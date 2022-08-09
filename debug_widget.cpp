@@ -21,6 +21,11 @@
 #include <iostream>
 #include <gtk/gtk.h>
 
+audio_widget* debug_widget::create_instance()
+{
+    return new debug_widget(300, 300);
+}
+
 void debug_widget::on_creation_callback()
 {
     set_label("Debug Widget!");

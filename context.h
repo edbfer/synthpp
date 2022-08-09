@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <sigc++/slot.h>
-
 #include <string>
 #include <tuple>
 #include <vector>
@@ -39,11 +37,17 @@ enum midi_types
     CONTROL_CHANGE = 0b1011,
 };
 
+//forward
+class MainWindow;
+
 struct context
 {
-    sigc::slot<void(std::string)> log;
-    sigc::slot<void(audio_widget*)> put_widget;
-    sigc::slot<void(audio_widget*)> remove_widget;
-    sigc::slot<std::vector<std::pair<PmDeviceID, PmDeviceInfo*>>()> get_midi_active_devices;
-    sigc::slot<void(midi_widget*)> register_midi_consumer;
+    void log(std::string msg);
+    void put_widget(audio_widget* widget);
+    void remove_widget(audio_widget* widget);
+
+    void set_base_class(MainWindow* base_class);
+
+    private:
+        MainWindow* program_context;
 };

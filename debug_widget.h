@@ -28,12 +28,14 @@ class debug_widget : public audio_widget
 {
     public:
 
-        debug_widget(context* program_context, int x_pos, int y_pos) : audio_widget(program_context, x_pos, y_pos) {};
+        debug_widget(int x_pos, int y_pos) : audio_widget(x_pos, y_pos) {};
 
         void on_creation_callback();
         void post_creation_callback();
         void process();
         void process_ui();
+
+        static audio_widget* create_instance();
 
     protected:
 

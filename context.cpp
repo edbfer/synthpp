@@ -15,35 +15,25 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
-
 #include "context.h"
-#include "audio_widget.h"
-#include "port.h"
+#include "mainwindow.h"
 
-#include <boost/circular_buffer.hpp>
-
-//this simple plugin implements a simple slap-back echo of the selected number of samples
-
-class delay_widget : public audio_widget
+void context::log(std::string msg)
 {
-    public:
-        delay_widget();
+    program_context->log(msg);
+}
 
-        void on_creation_callback();
+void context::put_widget(audio_widget* widget)
+{
+    program_context->playfield_add_widget(widget);
+}
 
-        void process();
-        void process_ui();
-        void post_creation_callback();
+void context::remove_widget(audio_widget* widget)
+{
+    program_context->playfield_remove_widget(widget);
+}
 
-        static audio_widget* create_instance();
-
-    protected:
-        boost::circular_buffer<float> cbuffer;
-
-        int last_size;
-
-        //input, output port
-        port* input_port, *output_port;
-
-};
+void context::set_base_class(MainWindow* base_class)
+{
+    program_context = base_class;
+}

@@ -23,19 +23,21 @@ PKGCONF_LIBS = $(shell pkg-config gtk4 libadwaita-1 sigc++-3.0 -libs)
 
 PORTAUDIO_LIBS = -lportaudio -lportmidi -lporttime -ldl
 
+ELF_LIBS = -lbfd
+
 
 FILE_PARSING_DIR = file_parsing/
 
 SUBDIRS = $(FILE_PARSING_DIR)/file_parsing.o
 
-MAINDIRS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o midi_options_dialog.o 
+MAINDIRS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o midi_options_dialog.o settings_manager.o widget_manager.o context.o plugin_manager.o
 
 OBJECTS = $(MAINDIRS)
 
 TARGET = output/synthpp
 
-CFLAGS = -O0 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
-LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) -fno-stack-protector -pthread -rdynamic
+CFLAGS = -O2 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
+LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) $(ELF_LIBS) -fno-stack-protector -pthread -rdynamic
 
 all: $(OBJECTS) $(TARGET)
 	mkdir -p output/plugins
@@ -47,7 +49,7 @@ file_parsing.o:
 	$(MAKE) -C $(FILE_PARSING_DIR)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET)
+	$(CC) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
 main.o: main.cpp mainwindow.h
 	$(CC) $(CFLAGS) -c main.cpp -o main.o

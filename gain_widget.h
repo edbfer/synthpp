@@ -26,13 +26,15 @@
 class gain_widget : public audio_widget
 {
     public:
-        gain_widget(context* program_context);
+        gain_widget();
 
         void on_creation_callback();
 
         void process();
         void process_ui();
         void post_creation_callback();
+
+        static audio_widget* create_instance();
 
     protected:
         port* input_port;

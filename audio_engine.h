@@ -53,7 +53,7 @@ class audio_engine
         };
 
         //audio_engine();
-        audio_engine(std::vector<audio_widget*>* widget_list, std::vector<signal_path*>* path_list, context* program_context);
+        audio_engine(context* program_context, std::vector<audio_widget*>* widget_list, std::vector<signal_path*>* path_list);
 
         ~audio_engine();
 

@@ -26,6 +26,9 @@
 
 //dialogs
 #include "midi_options_dialog.h"
+#include "settings_manager.h"
+#include "widget_manager.h"
+#include "plugin_manager.h"
 
 #include <dlfcn.h>
 #include <pthread.h>
@@ -47,7 +50,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-    gtk_window_destroy(main_window);
+   gtk_window_destroy(main_window);
 }
 
 void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
@@ -180,15 +183,6 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     window->widget_catalog = (GtkComboBoxText*) gtk_combo_box_text_new();
     gtk_widget_set_margin_start(GTK_WIDGET(window->widget_catalog), 5);
     gtk_widget_set_margin_end(GTK_WIDGET(window->widget_catalog), 5);
-    gtk_combo_box_text_insert(window->widget_catalog, 0, "debug", "Debug widget");
-    gtk_combo_box_text_insert(window->widget_catalog, 1, "delay", "Slap-Back Delay");
-    gtk_combo_box_text_insert(window->widget_catalog, 2, "fdelay", "Feedback Delay");
-    gtk_combo_box_text_insert(window->widget_catalog, 3, "gain", "Gain");
-    gtk_combo_box_text_insert(window->widget_catalog, 4, "midi", "MIDI input device");
-    gtk_combo_box_text_insert(window->widget_catalog, 5, "c4", "Counter: 4 bits");
-    gtk_combo_box_text_insert(window->widget_catalog, 6, "c8", "Counter: 8 bits");
-    gtk_combo_box_text_insert(window->widget_catalog, 7, "c16", "Counter: 16 bits");
-    gtk_combo_box_text_insert(window->widget_catalog, 8, "probe", "Probe widget");
     gtk_box_append(window->right_panel, GTK_WIDGET(window->widget_catalog));
 
     //add button
@@ -259,13 +253,25 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     window->darea_mouse_grabbed = false;
 
     //memset the program_context, for some reason is being stupid
-    std::memset(&window->program_context, 0, sizeof(program_context));
-    window->program_context.log = sigc::mem_fun(*window, &MainWindow::log);
+    //std::memset(&window->program_context, 0, sizeof(program_context));
+    /*window->program_context.log = sigc::mem_fun(*window, &MainWindow::log);
     window->program_context.put_widget = sigc::mem_fun(*window, &MainWindow::playfield_add_widget);
-    window->program_context.remove_widget = sigc::mem_fun(*window, &MainWindow::playfield_remove_widget);
+    window->program_context.remove_widget = sigc::mem_fun(*window, &MainWindow::playfield_remove_widget);*/
 
     //present the window
     gtk_window_present(window->main_window);
+
+    //do the remainder of the init
+    window->smanager = new settings_manager();
+    window->smanager->load_settings();
+
+    window->wmanager = new widget_manager();
+    window->register_builtin_widgets();
+
+    window->pmanager = new plugin_manager(window->smanager, window->wmanager);
+    window->pmanager->load_plugins();
+
+    window->program_context->set_base_class(window);
 }
 
 void MainWindow::playfield_add_widget(audio_widget* awidget)
@@ -286,49 +292,38 @@ void MainWindow::playfield_remove_widget(audio_widget* awidget)
     gtk_fixed_remove(playfield, GTK_WIDGET(awidget->base_class));
 }
 
+void MainWindow::register_builtin_widgets()
+{
+    wmanager->register_widget("org.edbfer.synthpp.builtin.debug", "Debug widget", "Just a simple debug widget", debug_widget::create_instance);
+    gtk_combo_box_text_insert(widget_catalog, 0, "org.edbfer.synthpp.builtin.debug", "Debug widget");
+
+    wmanager->register_widget("org.edbfer.synthpp.builtin.delay", "Simple delay", "Simple delay", delay_widget::create_instance);
+    gtk_combo_box_text_insert(widget_catalog, 1, "org.edbfer.synthpp.builtin.delay", "Simple delay");
+
+    wmanager->register_widget("org.edbfer.synthpp.builtin.fdelay", "Feedback delay", "Delay with feedback and dry/wet selectors", feedback_delay_widget::create_instance);
+    gtk_combo_box_text_insert(widget_catalog, 2, "org.edbfer.synthpp.builtin.fdelay", "Feedback delay");
+
+    wmanager->register_widget("org.edbfer.synthpp.builtin.gain", "Gain boost", "Adjusts signal loudness", gain_widget::create_instance);
+    gtk_combo_box_text_insert(widget_catalog, 3, "org.edbfer.synthpp.builtin.gain", "Gain boost");
+    
+    wmanager->register_widget("org.edbfer.synthpp.builtin.c4", "Sequencer: 4 bits", "Sequencer with 4 bits of output. Adjustable rate", counter_widget::create_instance_4);
+    wmanager->register_widget("org.edbfer.synthpp.builtin.c8", "Sequencer: 8 bits", "Sequencer with 8 bits of output. Adjustable rate", counter_widget::create_instance_8);
+    wmanager->register_widget("org.edbfer.synthpp.builtin.c16", "Sequencer: 16 bits", "Sequencer with 16 bits of output. Adjustable rate", counter_widget::create_instance_16);
+    gtk_combo_box_text_insert(widget_catalog, 4, "org.edbfer.synthpp.builtin.c4", "Sequencer: 4 bits");
+    gtk_combo_box_text_insert(widget_catalog, 5, "org.edbfer.synthpp.builtin.c8", "Sequencer: 8 bits");
+    gtk_combo_box_text_insert(widget_catalog, 6, "org.edbfer.synthpp.builtin.c16", "Sequencer: 16 bits");
+
+    wmanager->register_widget("org.edbfer.synthpp.builtin.probe", "Probe", "Shows the value of the connected path", probe_widget::create_instance);
+    gtk_combo_box_text_insert(widget_catalog, 7, "org.edbfer.synthpp.builtin.probe", "Probe");
+}
+
 void MainWindow::test_button_clicked_callback(GtkButton* btn, MainWindow* window)
 {
     audio_widget* to_add;
 
     std::string selection = gtk_combo_box_get_active_id(GTK_COMBO_BOX(window->widget_catalog));
 
-    if (selection == "debug")
-    {
-        to_add = new debug_widget(&window->program_context, 300, 300);
-    }
-    else if(selection == "delay")
-    {
-        to_add = new delay_widget(&window->program_context);
-    }
-    else if(selection == "fdelay")
-    {
-        to_add = new feedback_delay_widget(&window->program_context);
-    }
-    else if(selection == "gain")
-    {
-        to_add = new gain_widget(&window->program_context);
-    }
-    /*else if(selection == "midi")
-    {
-        to_add = new midi_widget(&window->program_context);
-    }*/
-    else if(selection == "c4")
-    {
-        to_add = new counter_widget(&window->program_context, 4);
-    }
-    else if(selection == "c8")
-    {
-        to_add = new counter_widget(&window->program_context, 8);
-    }
-    else if(selection == "c16")
-    {
-        to_add = new counter_widget(&window->program_context, 16);
-    }
-       else if(selection == "probe")
-    {
-        to_add = new probe_widget(&window->program_context);
-    }
-
+    to_add = window->wmanager->create_widget(selection);
     window->playfield_add_widget(to_add);
     
     //redraw
@@ -459,12 +454,15 @@ void MainWindow::gdk_surface_layout_callback(GdkSurface* sfc, int width, int hei
 
 void MainWindow::mainwindow_show_callback(GtkWindow* wnd, MainWindow* window)
 {
+    window->program_context = new context();
+    window->program_context->set_base_class(window);
+
     //attach to window size change event
     auto gdk_surface = gtk_native_get_surface(GTK_NATIVE(wnd));
 
     g_signal_connect(gdk_surface, "layout", G_CALLBACK(gdk_surface_layout_callback), window);
 
-    window->engine = new audio_engine(&(window->playfield_widget_list), &(window->signal_path_list), &(window->program_context));
+    window->engine = new audio_engine(window->program_context, &(window->playfield_widget_list), &(window->signal_path_list));
 
     //create dialogs
     window->midi_dialog = new midi_options_dialog(window->main_window, window->engine);
@@ -491,19 +489,6 @@ void MainWindow::mainwindow_show_callback(GtkWindow* wnd, MainWindow* window)
     {
         gtk_combo_box_text_insert(window->audio_device_catalog, position++, std::to_string(position).c_str(), (std::string(info_pair.second->name) + " (in: " + std::to_string(info_pair.second->maxInputChannels) + ", out: " + std::to_string(info_pair.second->maxOutputChannels) + ")").c_str());
     }
-
-    //load the dl
-    void* plugin_test = dlopen("./plugin_test.sppp", RTLD_NOW | RTLD_GLOBAL);
-    char* err = dlerror();
-    if (err) std::cout << err << std::endl;
-    std::string (*magic_fn)() = (std::string(*)()) dlsym(plugin_test, "get_magic");
-    std::cout << "magic: " << magic_fn() << std::endl;
-    std::string (*name_fn)() = (std::string(*)()) dlsym(plugin_test, "get_plugin_name");
-    std::cout << "name: " << name_fn() << std::endl;
-
-    audio_widget* (*c_fn)(context*) = (audio_widget*(*)(context*)) dlsym(plugin_test, "create_widget_instance");
-
-    window->playfield_add_widget(c_fn(&(window->program_context)));
 }
 
 void MainWindow::scrolled_edge_reached(GtkScrolledWindow* self, GtkPositionType pos, MainWindow* window)

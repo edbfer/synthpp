@@ -28,6 +28,11 @@
 #include "audio_engine.h"
 #include "port.h"
 #include "midi_options_dialog.h"
+#include "context.h"
+
+#include "widget_manager.h"
+#include "plugin_manager.h"
+#include "settings_manager.h"
 
 // Mainwindow class
 //
@@ -49,6 +54,9 @@ class MainWindow
 
         std::vector<audio_widget*>& get_audio_widget_list();
         std::vector<signal_path*>& get_signal_path_list();
+
+        //function to write on the log window
+        void log(std::string text);
     
     protected:
 
@@ -85,9 +93,6 @@ class MainWindow
         GtkComboBoxText* widget_catalog;
         GtkComboBoxText* audio_device_catalog;
         static void audio_device_catalog_changed(GtkComboBox* cbx, MainWindow* window);
-        
-        //function to write on the log window
-        void log(std::string text);
 
         GtkScrolledWindow* log_panel_scroll;
 
@@ -136,8 +141,14 @@ class MainWindow
         std::vector<signal_path*> signal_path_list;
 
         //cria a audioengine
+        context* program_context;
         audio_engine* engine = nullptr;
 
         //create logger structure to pass
-        context program_context;
+        settings_manager* smanager;
+        widget_manager* wmanager;
+        plugin_manager* pmanager;
+
+        //widget manager
+        void register_builtin_widgets();
 };

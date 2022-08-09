@@ -28,13 +28,17 @@ class counter_widget : public audio_widget
 
     public:
 
-        counter_widget(context* program_context, int nports);
+        counter_widget(int nports);
 
         void on_creation_callback();
 
         void process();
         void process_ui() {};
         void post_creation_callback();
+
+        static audio_widget* create_instance_4();
+        static audio_widget* create_instance_8();
+        static audio_widget* create_instance_16();
 
     protected:
 

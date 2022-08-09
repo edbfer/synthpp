@@ -17,8 +17,12 @@
 
 #include "gain_widget.h"
 
+audio_widget* gain_widget::create_instance()
+{
+    return new gain_widget;
+}
 
-gain_widget::gain_widget(context* program_context) : audio_widget(program_context)
+gain_widget::gain_widget() : audio_widget()
 {
 }
 

@@ -19,11 +19,13 @@
 
 #include <string>
 
+#define PLUGIN_METADATA __attribute__ ((section("synthpp-metadata")))
+
 class test_plugin : public audio_widget
 {
     public:
 
-        test_plugin(context* program_context) : audio_widget(program_context) {}
+        test_plugin() : audio_widget() {}
 
         void on_creation_callback()
         {
@@ -51,14 +53,19 @@ extern "C" {
         return "SynthPP-Plugin-v1";
     }
 
+    const char* PLUGIN_METADATA magic_string = "SynthPP-Plugin-v1";
+    const char* PLUGIN_METADATA plugin_name = "org.edbfer.synthpp.test-plugin";
+    const char* PLUGIN_METADATA plugin_long_name = "Test plugin";
+    const char* PLUGIN_METADATA plugin_description = "This is a test plugin!";
+
     std::string get_plugin_name()
     {
         return "org.edbfer.synthpp.test-plugin";
     }
 
-    audio_widget* create_widget_instance(context* program_context)
+    audio_widget* create_widget_instance()
     {
-        test_plugin* tp = new test_plugin(program_context);
+        test_plugin* tp = new test_plugin();
         return tp;
     }
 }

@@ -29,7 +29,7 @@ class feedback_delay_widget : public audio_widget
 {
     public:
 
-        feedback_delay_widget(context* program_context);
+        feedback_delay_widget();
         ~feedback_delay_widget();
 
         void on_creation_callback();
@@ -37,6 +37,8 @@ class feedback_delay_widget : public audio_widget
         void process();
         void process_ui();
         void post_creation_callback();
+
+        static audio_widget* create_instance();
 
     protected:
 

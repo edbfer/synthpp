@@ -18,7 +18,7 @@
 #include <string>
 #include "sink_widget.h"
 
-sink_widget::sink_widget(context* program_context, int nports) : audio_widget(program_context, 300, 300)
+sink_widget::sink_widget(int nports) : audio_widget(300, 300)
 {
     this->nports = nports;
 }
