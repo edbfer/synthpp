@@ -16,6 +16,7 @@
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "plugin_manager.h"
+#include "audio_widget.h"
 
 #include <filesystem>
 #include <fstream>
@@ -85,19 +86,30 @@ void plugin_manager::load_plugins()
 
         bool ispresent = false;
         int index = -1;
-        for(auto it = plugin_database.begin(); it < plugin_database.end(); it++)
+        for(auto it_data = plugin_database.begin(); it_data < plugin_database.end(); it_data++)
         {
             //we have the same file, keep register to check info
-            if(it->filepath == it->filepath)
+            if(it->filepath == it_data->filepath)
             {
                 ispresent = true;
-                index = it - plugin_database.begin();
+                index = it_data - plugin_database.begin();
+                break;
             }
         }
-        if(!ispresent) continue; //we will handle it in the dialog
+        if(!ispresent)
+        {
+            candidates.push_back(*it);
+            continue;
+        } //we will handle it in the dialog
 
         //get database entry
-        plugin& database_entry = plugin_database.at(index);
+        plugin* database_entry = &(plugin_database.at(index));
+        //is blacklisted?
+        if(database_entry->isblacklisted)
+        {
+            //we do nothing, and just delete from the candidates
+            continue;
+        } 
 
         //allocate buffer for checksum
         char* buffer = new char[nbytes];
@@ -109,47 +121,42 @@ void plugin_manager::load_plugins()
         //calculate checksum and cross-check
         GChecksum* checksum = g_checksum_new(G_CHECKSUM_SHA512);
         size_t dig_size = nbytes;
-        g_checksum_get_digest(checksum, (unsigned char*) buffer, &dig_size);
+        g_checksum_update(checksum, (unsigned char*) buffer, dig_size);
         std::string digest = g_checksum_get_string(checksum);
 
         delete buffer;
 
+        digest = (digest == "") ? "nocheck" : digest;
+
         //check if digest matches, otherwise we will leave it for the dialog
-        if(digest != database_entry.checksum)
+        if(digest != database_entry->checksum)
         {
             it->isInvalid = true;
             it->reason = bad_checksum;
+            candidates.push_back(*it);
             continue;
         }
 
         //we keep going, things match
         //load file with dlopen and get the symbols
-        //is blacklisted?
-        if(database_entry.isblacklisted)
-        {
-            //we do nothing, and just delete from the candidates
-            candidate_list.erase(it);
-        }
-        database_entry.dl_data = dlopen(it->filepath.c_str(), RTLD_NOW | RTLD_GLOBAL);
-        database_entry.name = *((std::string*) dlsym(database_entry.dl_data, "plugin_name"));
-        database_entry.long_name = *((std::string*) dlsym(database_entry.dl_data, "plugin_long_name"));
-        database_entry.description = *((std::string*) dlsym(database_entry.dl_data, "plugin_description"));
-        database_entry.isloaded = true;
-        database_entry.isInvalid = false;
-        database_entry.reason = normal;
+        database_entry->dl_data = dlopen(it->filepath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+        database_entry->name = (char*) *((char**) dlsym(database_entry->dl_data, "plugin_name"));
+        database_entry->long_name = (char*) *((char**) dlsym(database_entry->dl_data, "plugin_long_name"));
+        database_entry->description = (char*) *((char**) dlsym(database_entry->dl_data, "plugin_description"));
+        database_entry->isloaded = true;
+        database_entry->isInvalid = false;
+        database_entry->reason = normal;
 
         //register widget
-        audio_widget* (*cfun)() = (audio_widget*(*)()) dlsym(database_entry.dl_data, "create_widget_instance");
-        widman->register_widget(database_entry.name, database_entry.long_name, database_entry.description, cfun);
+        audio_widget* (*cfun)() = (audio_widget*(*)()) dlsym(database_entry->dl_data, "create_widget_instance");
+        widman->register_widget(database_entry->name, database_entry->long_name, database_entry->description, cfun);
 
-        //we can remove it from the candidates
-        candidate_list.erase(it);
+        continue;
     }
 
     //do we have plugins remaining?
-    //if(candidate_list.size() == 0) return;
+    if(candidates.size() == 0) return;
 
-    candidates = candidate_list;
     //we need the dialog
     create_plugin_selector_dialog();
 
@@ -208,6 +215,13 @@ void plugin_manager::create_plugin_selector_dialog()
                     }
                     break;
                 }
+
+                case invalid_reason::bad_checksum:
+                {
+                    display_long_name = p.long_name;
+                    description = "This plugin file was modified. This might have been simply due to an update or might indicate unwanted modifications. Please ensure that you trust the file before loading.";
+                    break;
+                }
             }
         }
         else
@@ -220,11 +234,11 @@ void plugin_manager::create_plugin_selector_dialog()
         adw_action_row_set_subtitle(row, description.c_str());
 
         //is invalid? use icon
-        if(p.isInvalid && (p.reason != invalid_reason::missing_info))       
+        if(p.isInvalid && (p.reason != invalid_reason::missing_info && p.reason != invalid_reason::bad_checksum))       
             adw_action_row_set_icon_name(row, "gtk-dialog-error");
         else
         {
-            if(p.isInvalid && (p.reason == invalid_reason::missing_info))              
+            if(p.isInvalid && (p.reason == invalid_reason::missing_info || p.reason == invalid_reason::bad_checksum))              
                 adw_action_row_set_icon_name(row, "gtk-dialog-warning");
 
             //can add the toggle button
@@ -232,10 +246,14 @@ void plugin_manager::create_plugin_selector_dialog()
             gtk_widget_set_vexpand(GTK_WIDGET(sw), false);
             gtk_widget_set_valign(GTK_WIDGET(sw), GTK_ALIGN_CENTER);
             adw_action_row_add_suffix(row, GTK_WIDGET(sw));
+
+            list_of_rows.push_back(std::pair(sw, p.name));
         }
 
         adw_preferences_group_add(plugin_list_group, GTK_WIDGET(row));
     }
+
+    g_signal_connect(plugin_dialogs, "response", G_CALLBACK(plugin_selector_response), this);
 }
 
 void plugin_manager::populate_bfd_info(plugin& p)
@@ -248,6 +266,7 @@ void plugin_manager::populate_bfd_info(plugin& p)
     {
         p.isInvalid = true;
         p.reason = invalid_reason::not_elf_object;
+        p.isblacklisted = true;
         return;
     }
 
@@ -262,6 +281,7 @@ void plugin_manager::populate_bfd_info(plugin& p)
         delete symtab;
         p.isInvalid = true;
         p.reason = invalid_reason::bad_object;
+        p.isblacklisted = true;
         return;
     }
 
@@ -272,6 +292,12 @@ void plugin_manager::populate_bfd_info(plugin& p)
     std::ifstream pl_stream(p.filepath);
     char* buffer = new char[std::filesystem::file_size(p.filepath)];
     pl_stream.read(buffer, std::filesystem::file_size(p.filepath));
+
+    //can calculate checksums
+    GChecksum* checksum = g_checksum_new(G_CHECKSUM_SHA512);
+    size_t checklen = std::filesystem::file_size(p.filepath);
+    g_checksum_update(checksum, (unsigned char*) buffer, checklen);
+    p.checksum = g_checksum_get_string(checksum);
 
     std::string magic = "";
 
@@ -286,6 +312,7 @@ void plugin_manager::populate_bfd_info(plugin& p)
         delete symtab;
         p.isInvalid = true;
         p.reason = invalid_reason::bad_object;
+        p.isblacklisted = true;
         return;
     }
 
@@ -305,6 +332,7 @@ void plugin_manager::populate_bfd_info(plugin& p)
         delete symtab;
         p.isInvalid = true;
         p.reason = invalid_reason::bad_object;
+        p.isblacklisted = true;
         return;
     }
 
@@ -314,6 +342,7 @@ void plugin_manager::populate_bfd_info(plugin& p)
     {
         p.reason = normal;
         p.isInvalid = false;
+        p.isblacklisted = true;
     }
 
     delete symtab;
@@ -338,3 +367,55 @@ bool plugin_manager::find_symbol(bfd* cur, asymbol** symtab, int nsym, std::stri
     return false;
 }
 
+void plugin_manager::plugin_selector_response(GtkDialog* dialog, gint response_id, plugin_manager* ctx)
+{
+    if(response_id == GTK_RESPONSE_CANCEL)
+    {
+        //keep as is
+        gtk_window_close(GTK_WINDOW(dialog));
+    }
+    else if(response_id == GTK_RESPONSE_APPLY)
+    {
+        //we need to update the plugin_database and then save to file
+        //lets parse the switches
+        for(auto pair : ctx->list_of_rows)
+        {
+            bool state = gtk_switch_get_active(pair.first);
+            
+            //find the corresponding plugin in the candidates
+            for(auto& p : ctx->candidates)
+            {
+                if(p.name == pair.second)
+                    p.isblacklisted = !state;
+
+                //btw, we can load the wanted ones
+                if(p.isblacklisted == false)
+                {
+                    p.dl_data = dlopen(p.filepath.c_str(), RTLD_NOW | RTLD_GLOBAL);
+                    p.isloaded = true;
+
+                    audio_widget* (*cfun)() = (audio_widget*(*)()) dlsym(p.dl_data, "create_widget_instance");
+                    ctx->widman->register_widget(p.name, p.long_name, p.description, cfun);
+                }
+            }
+        }
+
+        //insert candidates in the plugin_database
+        ctx->plugin_database.insert(ctx->plugin_database.end(), ctx->candidates.begin(), ctx->candidates.end());
+
+        ctx->save_plugin_database();
+    }
+
+    gtk_window_close(GTK_WINDOW(ctx->plugin_dialogs));
+}
+
+void plugin_manager::save_plugin_database()
+{
+    std::ofstream out(setman->get_work_directory() + "/plugin_database.dat");
+
+    for(plugin p : plugin_database)
+    {
+        out << p.filepath << '\t' << ((p.checksum == "") ? "nocheck" : p.checksum) << '\t' << p.isblacklisted << '\n';
+    }
+    out << std::flush;
+}

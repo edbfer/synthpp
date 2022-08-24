@@ -67,9 +67,14 @@ class plugin_manager {
         std::vector<plugin> plugin_database;
         std::vector<plugin> candidates;
 
+        void save_plugin_database();
+
         void create_plugin_selector_dialog();
+        static void plugin_selector_response(GtkDialog* dialog, gint response_id, plugin_manager* ctx);
+
         void populate_bfd_info(plugin& p);
         bool find_symbol(bfd* cur, asymbol** symtab, int nsym, std::string symbol, unsigned long& offset);
+
         //bool find_symbol(asymbol** symtab, int nsym, std::string symbol, void*& retval);
 
         //reference to the settings manager
@@ -80,5 +85,5 @@ class plugin_manager {
         GtkDialog* plugin_dialogs;
         AdwPreferencesPage* plugin_list;
         AdwPreferencesGroup* plugin_list_group;
-        std::vector<std::pair<AdwActionRow, plugin>> list_of_rows;
+        std::vector<std::pair<GtkSwitch*, std::string>> list_of_rows;
 };

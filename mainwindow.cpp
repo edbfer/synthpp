@@ -56,9 +56,27 @@ MainWindow::~MainWindow()
 void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
 
     //create window
+    window->app = app;
     window->main_window = (GtkWindow*) gtk_application_window_new(app);
     gtk_window_set_title(window->main_window, "synthpp");
 
+    //do the remainder of the init
+    window->smanager = new settings_manager();
+    window->smanager->load_settings();
+
+    window->wmanager = new widget_manager();
+    window->register_builtin_widgets();
+
+    window->pmanager = new plugin_manager(window->smanager, window->wmanager);
+    window->pmanager->load_plugins();
+    window->create_app_actions();
+
+    //initialize vars
+    window->can_create_path = false;
+    window->is_delete_key = false;
+    window->darea_mouse_grabbed = false;
+
+    //actual ui
     int height = 768, width = 1024;
     gtk_window_set_default_size(window->main_window, width, height);
 
@@ -222,17 +240,52 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     //get size of fixed
     gtk_fixed_put(window->playfield, GTK_WIDGET(window->playfield_aux_darea), 0, 0);
 
+    //darea popover
+    window->darea_popover = (GtkPopover*) gtk_popover_new();
+    gtk_widget_set_hexpand(GTK_WIDGET(window->darea_popover), true);
+    gtk_widget_set_vexpand(GTK_WIDGET(window->darea_popover), true);
+    gtk_widget_set_halign(GTK_WIDGET(window->darea_popover), GTK_ALIGN_FILL);
+    gtk_widget_set_valign(GTK_WIDGET(window->darea_popover), GTK_ALIGN_FILL);
+    /*window->darea_popover_sw = (GtkScrolledWindow*) gtk_scrolled_window_new();
+    gtk_widget_set_halign(GTK_WIDGET(window->darea_popover_sw), GTK_ALIGN_FILL);
+    gtk_widget_set_valign(GTK_WIDGET(window->darea_popover_sw), GTK_ALIGN_FILL);
+    gtk_widget_set_hexpand(GTK_WIDGET(window->darea_popover_sw), true);
+    gtk_popover_set_child(window->darea_popover, GTK_WIDGET(window->darea_popover_sw));*/
+
+    window->darea_popover_lb = (GtkListBox*) gtk_list_box_new();
+    gtk_list_box_set_selection_mode(window->darea_popover_lb, GTK_SELECTION_NONE);
+    gtk_widget_set_halign(GTK_WIDGET(window->darea_popover_lb), GTK_ALIGN_START);
+    gtk_widget_set_valign(GTK_WIDGET(window->darea_popover_lb), GTK_ALIGN_FILL);
+    gtk_widget_set_hexpand(GTK_WIDGET(window->darea_popover_lb), true);
+    gtk_widget_set_vexpand(GTK_WIDGET(window->darea_popover_lb), true);
+    /*gtk_scrolled_window_set_child(window->darea_popover_sw, GTK_WIDGET(window->darea_popover_lb));*/
+    g_signal_connect(window->darea_popover_lb, "row-activated", G_CALLBACK(darea_popover_activated), window);
+    gtk_popover_set_child(window->darea_popover, GTK_WIDGET(window->darea_popover_lb));
+
+    //list store for the popover
+    window->populate_darea_popover();
+
+    gtk_popover_set_has_arrow(GTK_POPOVER(window->darea_popover), false);
+    gtk_fixed_put(window->playfield, GTK_WIDGET(window->darea_popover), 200, 200);
+
     //show eevent
     g_signal_connect(window->main_window, "show", G_CALLBACK(mainwindow_show_callback), window);
     //trigger redraws
     g_timeout_add(17, GSourceFunc(playfield_signal_redraw), window);
 
     //attach drawing area mouse controller
+    GtkGestureClick* darea_gesture_click = (GtkGestureClick*) gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(darea_gesture_click), 0);
+    gtk_widget_add_controller(GTK_WIDGET(window->playfield_aux_darea),
+    GTK_EVENT_CONTROLLER(darea_gesture_click));
+
     GtkGestureDrag* darea_gesture_drag = (GtkGestureDrag*) gtk_gesture_drag_new();
     gtk_widget_add_controller(GTK_WIDGET(window->playfield_aux_darea), GTK_EVENT_CONTROLLER(darea_gesture_drag));
 
     GtkEventControllerMotion* darea_mouse_motion = (GtkEventControllerMotion*) gtk_event_controller_motion_new();
     gtk_widget_add_controller(GTK_WIDGET(window->playfield_aux_darea), GTK_EVENT_CONTROLLER(darea_mouse_motion));
+
+    g_signal_connect(darea_gesture_click, "pressed", G_CALLBACK(playfield_aux_darea_gesture_click), window);
 
     g_signal_connect(darea_mouse_motion, "motion", G_CALLBACK(playfield_aux_darea_motion), window);
 
@@ -247,11 +300,6 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     g_signal_connect(darea_key_actions, "key-pressed", G_CALLBACK(playfield_aux_darea_key_down), window);
     g_signal_connect(darea_key_actions, "key-released", G_CALLBACK(playfield_aux_darea_key_up), window);
 
-    //initialize vars
-    window->can_create_path = false;
-    window->is_delete_key = false;
-    window->darea_mouse_grabbed = false;
-
     //memset the program_context, for some reason is being stupid
     //std::memset(&window->program_context, 0, sizeof(program_context));
     /*window->program_context.log = sigc::mem_fun(*window, &MainWindow::log);
@@ -260,18 +308,6 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
 
     //present the window
     gtk_window_present(window->main_window);
-
-    //do the remainder of the init
-    window->smanager = new settings_manager();
-    window->smanager->load_settings();
-
-    window->wmanager = new widget_manager();
-    window->register_builtin_widgets();
-
-    window->pmanager = new plugin_manager(window->smanager, window->wmanager);
-    window->pmanager->load_plugins();
-
-    window->program_context->set_base_class(window);
 }
 
 void MainWindow::playfield_add_widget(audio_widget* awidget)
@@ -770,6 +806,24 @@ void MainWindow::playfield_aux_darea_key_up(GtkEventControllerKey* eck, guint ke
     }
 }
 
+void MainWindow::playfield_aux_darea_gesture_click(GtkGestureClick* ges, int npresses, double x, double y, MainWindow* window)
+{
+    int button_number = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(ges));
+
+    //if we have the right-button clicked
+    if(button_number == 3 /*this is right click*/)
+    {
+        //show popover
+        GdkRectangle rect = {x, y, 1, 1};
+        gtk_popover_set_pointing_to(GTK_POPOVER(window->darea_popover), &rect);
+        gtk_popover_popdown(GTK_POPOVER(window->darea_popover));
+        gtk_popover_present(GTK_POPOVER(window->darea_popover));
+        
+        //window->populate_darea_popover();
+        gtk_widget_show(GTK_WIDGET(window->darea_popover));
+    }
+}
+
 
 void MainWindow::remove_signal_path(signal_path* s_path)
 {
@@ -840,4 +894,76 @@ void MainWindow::hbar_stop_engine_button_clicked(GtkButton* btn, MainWindow* win
 
     //disable device change
     gtk_widget_set_sensitive(GTK_WIDGET(window->audio_device_catalog), true);
+}
+
+void MainWindow::populate_darea_popover()
+{
+    //take the Menu and add a button for each widget
+    //clear the menu
+
+    //for each widget add a button
+    std::vector<widget_manager::widget_entry>& database = wmanager->get_widget_database();
+
+    for(widget_manager::widget_entry entry : database)
+    {     
+        GtkListBoxRow* row = (GtkListBoxRow*) gtk_list_box_row_new();
+        GtkLabel* label = (GtkLabel*) gtk_label_new(entry.long_name.c_str());
+
+        gtk_list_box_row_set_child(row, GTK_WIDGET(label));
+        gtk_actionable_set_detailed_action_name(GTK_ACTIONABLE(row), ("app.add_widget::" + entry.name).c_str());
+        gtk_list_box_row_set_activatable(row, true);
+        gtk_widget_set_sensitive(GTK_WIDGET(row), true);
+
+        gtk_widget_set_halign(GTK_WIDGET(label), GTK_ALIGN_START);
+        gtk_label_set_justify(label, GTK_JUSTIFY_LEFT);
+
+        gtk_list_box_append(darea_popover_lb, GTK_WIDGET(row));
+    }
+}
+
+void MainWindow::create_app_actions()
+{
+    //GSimpleACtions
+    //add_widget
+    app_add_widget_action = (GSimpleAction*) g_simple_action_new("add_widget", G_VARIANT_TYPE_STRING);
+    g_signal_connect(app_add_widget_action, "activate", G_CALLBACK(app_action_callback), this);
+
+    g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(app_add_widget_action));
+}
+
+void MainWindow::app_action_callback(GSimpleAction* act, GVariant* param, MainWindow* window)
+{
+    std::string action_name = g_action_get_name(G_ACTION(act));
+    //handle correspondingly
+    if(action_name == "add_widget")
+    {
+        //this will create widget
+        std::string target = g_variant_get_string(param, NULL);
+        window->playfield_add_widget(window->wmanager->create_widget(target));
+    }
+}
+
+void MainWindow::darea_popover_lv_fac_setup(GtkSignalListItemFactory* fac, GtkListItem* list_item, MainWindow* window)
+{
+    std::string long_name = "";
+
+    GtkLabel* item = (GtkLabel*) gtk_label_new(long_name.c_str());
+    gtk_list_item_set_child(list_item, GTK_WIDGET(item));
+}
+
+/*void MainWindow::darea_popover_lv_fac_bind(GtkSignalListItemFactory* fac, GtkListItem* object, MainWindow* window)
+{
+    int pos = gtk_list_item_get_position(object);
+    const char* name = gtk_string_list_get_string(window->darea_popover_list_store, pos);
+
+    std::string long_name = window->wmanager->get_widget_long_name(name);
+
+    GtkLabel* label = (GtkLabel*) gtk_list_item_get_child(object);
+    gtk_label_set_text(label, long_name.c_str());
+    gtk_label_set_justify(label, GTK_JUSTIFY_LEFT);
+    gtk_widget_set_hexpand(GTK_WIDGET(label), true);
+}*/
+
+void MainWindow::darea_popover_activated(GtkListBox* lb, GtkListBoxRow* row, MainWindow* window)
+{
 }

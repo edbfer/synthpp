@@ -36,12 +36,13 @@ OBJECTS = $(MAINDIRS)
 
 TARGET = output/synthpp
 
-CFLAGS = -O2 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
+CFLAGS = -O0 -g -std=c++17 -fpermissive $(PKGCONF_INCLUDES)
 LDFLAGS = $(PKGCONF_LIBS) $(PORTAUDIO_LIBS) $(ELF_LIBS) -fno-stack-protector -pthread -rdynamic
 
 all: $(OBJECTS) $(TARGET)
 	mkdir -p output/plugins
 	cp *.sppp output/plugins || :
+	cp -r styles/ output/
 
 plugins: $(PLUGINS)
 

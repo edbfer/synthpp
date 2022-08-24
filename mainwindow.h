@@ -60,6 +60,7 @@ class MainWindow
     
     protected:
 
+        GtkApplication* app;
         GtkWindow* main_window;
         //GtkPaned* main_grid;
         AdwFlap* main_grid;
@@ -123,6 +124,7 @@ class MainWindow
         bool do_redraw;
         static bool playfield_signal_redraw(MainWindow* window);
         
+        static void playfield_aux_darea_gesture_click(GtkGestureClick* ges, int npresses, double x, double y, MainWindow* window);
         static void playfield_aux_darea_begin_grab(GtkGestureDrag* ges, double x, double y, MainWindow* window);
         static void playfield_aux_darea_update_grab(GtkGestureDrag* ges, double offset_x, double offset_y, MainWindow* window);
         static void playfield_aux_darea_end_grab(GtkGestureDrag* ges, double x, double y, MainWindow* window);
@@ -151,4 +153,18 @@ class MainWindow
 
         //widget manager
         void register_builtin_widgets();
+
+        //actions
+        void create_app_actions();
+        GSimpleAction* app_add_widget_action;
+        static void app_action_callback(GSimpleAction* act, GVariant* param, MainWindow* window);
+
+        //popover for the drawing area
+        GtkPopover* darea_popover;
+        GtkScrolledWindow* darea_popover_sw;
+        GtkListBox* darea_popover_lb;
+        static void darea_popover_lv_fac_setup(GtkSignalListItemFactory* fac, GtkListItem* list_item, MainWindow* window);
+        static void darea_popover_lv_fac_bind(GtkSignalListItemFactory* fac, GtkListItem* object, MainWindow* window);
+        static void darea_popover_activated(GtkListBox* lb, GtkListBoxRow* row, MainWindow* window);
+        void populate_darea_popover();
 };

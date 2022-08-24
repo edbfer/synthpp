@@ -40,3 +40,21 @@ void widget_manager::register_widget(std::string name, std::string long_name, st
     }
     widget_database.push_back({name, long_name, description, creator_function});
 }
+
+std::vector<widget_manager::widget_entry>& widget_manager::get_widget_database()
+{
+    return widget_database;
+}
+
+std::string widget_manager::get_widget_long_name(std::string name)
+{
+    for(auto it = widget_database.begin(); it < widget_database.end(); it++)
+    {
+        if(it->name == name)
+        {
+            //load
+            return it->long_name;
+        }
+    }
+    return "";
+}

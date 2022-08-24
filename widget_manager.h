@@ -24,10 +24,7 @@
 class widget_manager
 {
     public:
-        audio_widget* create_widget(std::string name);
-        void register_widget(std::string name, std::string long_name, std::string description, audio_widget* (*creator_function) ());
 
-    private:
         struct widget_entry
         {
             std::string name;
@@ -35,5 +32,15 @@ class widget_manager
             std::string description;
             audio_widget* (*creator_function) ();
         };
+
+        audio_widget* create_widget(std::string name);
+
+        void register_widget(std::string name, std::string long_name, std::string description, audio_widget* (*creator_function) ());
+
+        std::vector<widget_entry>& get_widget_database();
+        
+        std::string get_widget_long_name(std::string name);
+
+    private:
         std::vector<widget_entry> widget_database;
 };
