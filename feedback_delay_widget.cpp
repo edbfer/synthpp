@@ -47,7 +47,7 @@ void feedback_delay_widget::on_creation_callback()
     // n_samples_selector.set_draw_value(true);
     // n_samples_selector.set_size_request(50, 300);
 
-    add_parameter("nsamp", 10.f);
+    add_parameter("nsamp", parameter_types::NUMERIC, 10.f);
     last_size = 10;
     add_control(control_type::scale, "nsamp_scale", "nsamp");
     n_samples_port = new port("nsamp", port::port_type::INPUT);
@@ -68,7 +68,7 @@ void feedback_delay_widget::on_creation_callback()
     // dry_wet_selector.set_draw_value(true);
     // dry_wet_selector.set_size_request(50, 300);
 
-    add_parameter("drywet", 0.5f);
+    add_parameter("drywet", parameter_types::NUMERIC, 0.5f);
     add_control(control_type::scale, "drywet_scale", "drywet");
     dry_wet_port = new port("d/w", port::port_type::INPUT);
     add_port(dry_wet_port);
@@ -87,7 +87,7 @@ void feedback_delay_widget::on_creation_callback()
     // feedback_selector.set_orientation(Gtk::Orientation::VERTICAL);
     // feedback_selector.set_draw_value(true);
     // feedback_selector.set_size_request(50, 300);
-    add_parameter("fback", 0.5f);
+    add_parameter("fback", parameter_types::NUMERIC, 0.5f);
     add_control(control_type::scale, "fback_scale", "fback");
     feedback_port = new port("fback", port::port_type::INPUT);
     add_port(feedback_port);
@@ -117,10 +117,10 @@ feedback_delay_widget::~feedback_delay_widget()
 
 void feedback_delay_widget::process()
 {
-    if(get_parameter_value("nsamp") != last_size)
+    if(get_numerical_parameter_value("nsamp") != last_size)
     {
-        cbuffer.rresize(get_parameter_value("nsamp"), 0.f);
-        last_size = get_parameter_value("nsamp");
+        cbuffer.rresize(get_numerical_parameter_value("nsamp"), 0.f);
+        last_size = get_numerical_parameter_value("nsamp");
     }
 
     //get value at input port
@@ -130,10 +130,10 @@ void feedback_delay_widget::process()
     cbuffer.pop_front();
 
     //the resulting sample will be the front of the circular buffer + the current value
-    float res = (1.0f - get_parameter_value("drywet")) * sample + get_parameter_value("drywet") * from_buffer;
+    float res = (1.0f - get_numerical_parameter_value("drywet")) * sample + get_numerical_parameter_value("drywet") * from_buffer;
 
     //push the sample to the back of the buffer
-    float to_buffer = (1.0f - get_parameter_value("fback")) * sample + get_parameter_value("fback") * res;
+    float to_buffer = (1.0f - get_numerical_parameter_value("fback")) * sample + get_numerical_parameter_value("fback") * res;
     cbuffer.push_back(to_buffer);
 
     //place the result in the output port

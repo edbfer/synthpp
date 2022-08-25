@@ -45,6 +45,7 @@ struct context
     void log(std::string msg);
     void put_widget(audio_widget* widget);
     void remove_widget(audio_widget* widget);
+    void show_widget_properties(audio_widget* widget);
 
     void set_base_class(MainWindow* base_class);
 

@@ -40,10 +40,15 @@ audio_widget::audio_widget(int x_pos, int y_pos)
     //event
     gesture_drag = (GtkGestureDrag*) gtk_gesture_drag_new();
     gtk_widget_add_controller(GTK_WIDGET(base_class), GTK_EVENT_CONTROLLER(gesture_drag));
- 
+
     //pressed event
     g_signal_connect(gesture_drag, "drag-begin", G_CALLBACK(mouse_grab_callback), this);
     g_signal_connect(gesture_drag, "drag-update", G_CALLBACK(mouse_grab_update_callback), this);
+
+    gesture_click = (GtkGestureClick*) gtk_gesture_click_new();
+    gtk_widget_add_controller(GTK_WIDGET(base_class), GTK_EVENT_CONTROLLER(gesture_click));
+
+    g_signal_connect(gesture_click, "pressed", G_CALLBACK(mouse_click_callback), this);
 
     ////add handler to mapped fixed_canvas
     g_signal_connect(base_class, "map", G_CALLBACK(_base_class_on_creation_callback), this);
@@ -53,7 +58,6 @@ audio_widget::audio_widget(int x_pos, int y_pos)
     css_provider = gtk_css_provider_new();
     GtkStyleContext* sctx = gtk_widget_get_style_context(GTK_WIDGET(base_class));
     gtk_style_context_add_provider(sctx, GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_THEME);
-
 
     isReady = false;
 }
@@ -265,6 +269,16 @@ void audio_widget::add_control(control_type type, std::string name, std::string 
 
             //assign the callback
             g_signal_connect(new_control.widget, "value-changed", G_CALLBACK(_base_class_scale_control_callback), this);
+            break;
+        }
+
+        case control_type::file_selector:
+        {
+            new_control.widget = gtk_file_chooser_dialog_new("Select a file", NULL, GTK_FILE_CHOOSER_ACTION_OPEN, "Cancel", GTK_RESPONSE_CANCEL, "Open", GTK_RESPONSE_APPLY, NULL);
+            gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(new_control.widget), false);
+
+            //assign the callback
+            g_signal_connect(new_control.widget, "response", G_CALLBACK(_base_class_file_selector_control_callback), this);
         }
     }
 
@@ -323,9 +337,9 @@ int audio_widget::find_parameter_id(std::string name)
     return -1;
 }
 
-void audio_widget::add_parameter(std::string name, float starting_value)
+void audio_widget::add_parameter(std::string name, parameter_types type, std::variant<float, std::string> starting_value)
 {
-    parameter_list.push_back({name, starting_value});
+    parameter_list.push_back({name, type, starting_value});
 }
 
 bool audio_widget::find_control_by_widget_pointer(GtkWidget* widget, ui_control& control)
@@ -348,13 +362,16 @@ void audio_widget::_base_class_scale_control_callback(GtkRange* scale, audio_wid
     if(widget->find_control_by_widget_pointer(GTK_WIDGET(scale), ctrl))
     {
         int idx = ctrl.parameter_index;
-        widget->parameter_list.at(idx).value = gtk_range_get_value(GTK_RANGE(scale));
+        //this should be numeric already, the previous code should not allow a type mismatch
+        widget->parameter_list.at(idx).val = (float) gtk_range_get_value(GTK_RANGE(scale));
     }
 }
 
-float audio_widget::get_parameter_value(std::string name)
+float audio_widget::get_numerical_parameter_value(std::string name)
 {
-    return parameter_list.at(find_parameter_id(name)).value;
+    //check type 
+    int id = find_parameter_id(name);
+    return (parameter_list.at(id).type == parameter_types::NUMERIC) ? std::get<float>(parameter_list.at(id).val) : NAN;
 }
 
 void audio_widget::_base_class_process()
@@ -365,7 +382,8 @@ void audio_widget::_base_class_process()
         port* p = port_vector.at(l.port_id);
         ui_control& ui = control_list.at(l.control_id);
 
-        parameter_list.at(ui.parameter_index).value = p->pop_sample();
+        //again this will be a numerical value already
+        parameter_list.at(ui.parameter_index).val = p->pop_sample();
         control_match_to_param(ui);
     }
 }
@@ -400,12 +418,17 @@ bool audio_widget::find_port_id(std::string name, int& id)
 
 void audio_widget::control_match_to_param(ui_control& ui)
 {
-    float val = parameter_list.at(ui.parameter_index).value;
+    int id = ui.parameter_index;
     switch(ui.type)
     {
         case control_type::scale:
         {
-            gtk_range_set_value(GTK_RANGE(ui.widget), val);
+            gtk_range_set_value(GTK_RANGE(ui.widget), std::get<float>(parameter_list.at(id).val));
+            break;
+        }
+
+        case control_type::file_selector:
+        {
             break;
         }
     }
@@ -419,4 +442,65 @@ void audio_widget::link_port_to_control(std::string linkname, std::string port, 
     if(!find_control_id(control, control_id)) return;
 
     link_list.push_back({linkname, port_id, control_id});
+}
+
+void audio_widget::_base_class_file_selector_control_callback(GtkFileChooserDialog* dialog, int response, audio_widget* widget)
+{
+    ui_control ctrl;
+    if(widget->find_control_by_widget_pointer(GTK_WIDGET(dialog), ctrl))
+    {
+        if(response == GTK_RESPONSE_APPLY)
+        {
+            GFile* selection = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(dialog));
+            char* filepath = g_file_get_path(selection);
+            ctrl.val = std::string(filepath);
+
+            int idx = ctrl.parameter_index;
+            widget->parameter_list.at(idx).val = ctrl.val;
+
+            //cleanup
+            g_free(filepath);
+            g_object_unref(selection);
+        }
+    }
+}
+
+void audio_widget::mouse_click_callback(GtkGestureClick* gclick, int n_presses, double x, double y, audio_widget* widget)
+{
+    int nbutton = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gclick));
+    if(nbutton == 1)
+    {
+        widget->program_context->show_widget_properties(widget);
+    }
+}
+
+void audio_widget::build_properties_page(AdwPreferencesPage* ppage)
+{
+    //name group
+    AdwPreferencesGroup* name_group = (AdwPreferencesGroup*) adw_preferences_group_new();
+    adw_preferences_page_set_name(ppage, "Widget Preferences");
+    adw_preferences_page_add(ppage, name_group);
+
+    //create the rows for the name and class name
+    AdwActionRow* name_row = (AdwActionRow*) adw_action_row_new();
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(name_row), long_name.c_str());
+    adw_action_row_set_subtitle(name_row, "");
+    adw_preferences_group_add(name_group, GTK_WIDGET(name_row));
+    AdwActionRow* class_row = (AdwActionRow*) adw_action_row_new();
+    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(class_row), name.c_str());
+    adw_action_row_set_subtitle(class_row, "Class name");
+    adw_preferences_group_add(name_group, GTK_WIDGET(class_row));
+
+    //now parameters
+    AdwPreferencesGroup* parameters_group = (AdwPreferencesGroup*) adw_preferences_group_new();
+    adw_preferences_group_set_title(parameters_group, "Parameters");
+    adw_preferences_group_set_description(parameters_group, "Add, Remove and modify parameters");
+    gtk_widget_set_hexpand(GTK_WIDGET(parameters_group), false);
+    adw_preferences_page_add(ppage, parameters_group);
+
+    //for each create row
+    for(parameter p : parameter_list)
+    {
+        
+    }
 }

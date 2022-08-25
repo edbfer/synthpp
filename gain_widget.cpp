@@ -50,14 +50,14 @@ void gain_widget::on_creation_callback()
     // adj->set_step_increment(0.1f);
 
     // put(gain_scale, 10, 10);
-    add_parameter("gain", 1.0f);
+    add_parameter("gain", parameter_types::NUMERIC, 1.0f);
     add_control(control_type::scale, "gain_scale", "gain");
 }
 
 void gain_widget::process()
 {
     float sample = input_port->pop_sample();
-    output_port->push_sample(get_parameter_value("gain") * sample);
+    output_port->push_sample(get_numerical_parameter_value("gain") * sample);
 }
 
 void gain_widget::process_ui()

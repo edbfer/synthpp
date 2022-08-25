@@ -24,13 +24,20 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <variant>
 
 #include <gtk/gtk.h>
+#include <adwaita.h>
 
 class audio_widget
 {
 
     public:
+        enum parameter_types
+        {
+            NUMERIC,
+            FILE_PATH
+        };
 
         audio_widget(int x_pos = 300, int y_pos = 300);
         ~audio_widget();
@@ -57,12 +64,16 @@ class audio_widget
         void control_match_to_param(ui_control& ui);
 
         //PARAMETERS
-        void add_parameter(std::string name, float starting_val);
-        float get_parameter_value(std::string name);
+        void add_parameter(std::string name, parameter_types type, std::variant<float, std::string> starting_val);
+
+        float get_numerical_parameter_value(std::string name);
+        std::string get_file_path_parameter_value(std::string name);
+        
         int find_parameter_id(std::string name);
 
         //settings
         //these go on the sidebar, not on the playfield ui, and there are more kinds!
+        void build_properties_page(AdwPreferencesPage* ppage);
 
         //get frame for UI
         void get_underlaying_fixed_position(int& x, int& y);
@@ -83,6 +94,9 @@ class audio_widget
         bool is_ready();
 
         GtkFixed* base_class;
+        context* program_context;
+        std::string long_name;
+        std::string name;
 
     private: 
 
@@ -105,7 +119,8 @@ class audio_widget
 
         struct parameter{
             std::string name;
-            float value;
+            parameter_types type;
+            std::variant<float, std::string> val;
         };
 
         struct link{
@@ -119,6 +134,7 @@ class audio_widget
 
         //pointer
         GtkGestureDrag* gesture_drag;
+        GtkGestureClick* gesture_click;
         GtkLabel* label;
 
         int ignore_mouse_drag;
@@ -129,6 +145,7 @@ class audio_widget
         //child frame
         static void mouse_grab_callback(GtkGestureDrag* gdrag, double x, double y, audio_widget* widget);
         static void mouse_grab_update_callback(GtkGestureDrag* gdrag, double offset_x, double offset_y, audio_widget* widget);
+        static void mouse_click_callback(GtkGestureClick* gclick, int n_presses, double x, double y, audio_widget* widget);
 
         //events handling interface
         void _base_class_process();
@@ -136,6 +153,7 @@ class audio_widget
         static void _base_class_on_creation_callback(GtkFixed* fxd, audio_widget* widget);
         static void _base_class_button_control_callback(GtkButton* btn, audio_widget* widget);
         static void _base_class_scale_control_callback(GtkRange* scale, audio_widget* widget);
+        static void _base_class_file_selector_control_callback(GtkFileChooserDialog* dialog, int response, audio_widget* widget);
 
         std::vector<port*> port_vector;
         std::vector<ui_control> control_list;
@@ -154,9 +172,6 @@ class audio_widget
 
         //css provider
         GtkCssProvider* css_provider;
-
-        //context
-        context* program_context;
 
         //file writing
         void serialize(std::ofstream& str);

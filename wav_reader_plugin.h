@@ -17,31 +17,15 @@
 
 #pragma once
 
-#include <string>
-#include <variant>
+#include "audio_widget.h"
 
-#include <gtk/gtklabel.h>
-#include <gtk/gtkbutton.h>
-#include <gtk/gtkscale.h>
+//this plugin reads wav files
+class wav_reader : public audio_widget
+{
+    wav_reader();
 
-enum control_type{
-    label,
-    button,
-    scale,
-    file_selector
-};
+    void on_creation_callback();
+    void post_creation_callback();
 
-struct ui_control{
-    std::string name;
-    control_type type;
-    int parameter_index;
-
-    GtkWidget* widget;
-
-    std::string text;
-    std::variant<float, std::string> val;
-    
-    float max_value;
-    float min_value;
-    float step;
+    static audio_widget* create_instance();
 };

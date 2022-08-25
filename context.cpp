@@ -37,3 +37,8 @@ void context::set_base_class(MainWindow* base_class)
 {
     program_context = base_class;
 }
+
+void context::show_widget_properties(audio_widget* widget)
+{
+    program_context->build_widget_properties(widget);
+}

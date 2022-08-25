@@ -53,7 +53,7 @@ void counter_widget::on_creation_callback()
     // adj->set_step_increment(5);
 
     // put(freq_scale, 10, 10);
-    add_parameter("freq", 100);
+    add_parameter("freq", parameter_types::NUMERIC, 100.f);
     add_control(control_type::scale, "freq_scale", "freq");
 
     //create as many nports as wanted
@@ -72,7 +72,7 @@ void counter_widget::process()
     // i % 2 = 0-> 2500Hz
     // i % 5 = 0-> 1000Hz
     // i % 100 = 0 -> 50Hz
-    int step = 5000 / int(std::max(get_parameter_value("freq"), 1.f));
+    int step = 5000 / int(std::max(get_numerical_parameter_value("freq"), 1.f));
     ticks++;
 
     if(ticks % step == 0)

@@ -134,15 +134,25 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     adw_flap_set_separator(window->main_grid, GTK_WIDGET(window->right_separator));
 
     //right panel
+    //stack
+    window->right_stack = (GtkStack*) gtk_stack_new();
+    //log panel as stack page
     window->right_panel = (GtkBox*) gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_widget_set_size_request(GTK_WIDGET(window->right_panel), 350, -1);
+    gtk_stack_add_named(window->right_stack, GTK_WIDGET(window->right_panel), "logpanel");
+
+    //right properties 
+    window->right_preferences = (AdwPreferencesPage*) adw_preferences_page_new();
+    gtk_stack_add_named(window->right_stack, GTK_WIDGET(window->right_preferences), "wprefs");
+    //set log as def
+    gtk_stack_set_visible_child_name(window->right_stack, "logpanel");
 
     window->right_size_clamp = (AdwClamp*) adw_clamp_new();
     gtk_orientable_set_orientation(GTK_ORIENTABLE(window->right_size_clamp), GTK_ORIENTATION_HORIZONTAL);
     gtk_widget_set_size_request(GTK_WIDGET(window->right_size_clamp), 100, -1);
     adw_clamp_set_maximum_size(window->right_size_clamp, 100);
 
-    adw_flap_set_flap(window->main_grid, GTK_WIDGET(window->right_panel));
+    adw_flap_set_flap(window->main_grid, GTK_WIDGET(window->right_stack));
 
     //gtk_paned_set_start_child(window->main_grid, GTK_WIDGET(window->right_panel));
     window->last_sidebar_position = (1./4.) * width;
@@ -196,20 +206,6 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
 
     gtk_box_append(window->right_panel, GTK_WIDGET(window->start_engine_button));
     gtk_box_append(window->right_panel, GTK_WIDGET(window->stop_engine_button));
-
-    //widget catalog
-    window->widget_catalog = (GtkComboBoxText*) gtk_combo_box_text_new();
-    gtk_widget_set_margin_start(GTK_WIDGET(window->widget_catalog), 5);
-    gtk_widget_set_margin_end(GTK_WIDGET(window->widget_catalog), 5);
-    gtk_box_append(window->right_panel, GTK_WIDGET(window->widget_catalog));
-
-    //add button
-    window->test_button = (GtkButton*) gtk_button_new();
-    gtk_button_set_label(window->test_button, "Add");
-    gtk_widget_set_margin_start(GTK_WIDGET(window->test_button), 5);
-    gtk_widget_set_margin_end(GTK_WIDGET(window->test_button), 5);
-    g_signal_connect(window->test_button, "clicked", G_CALLBACK(test_button_clicked_callback), window);
-    gtk_box_append(window->right_panel, GTK_WIDGET(window->test_button));
 
     //place the fixed
     window->playfield = (GtkFixed*) gtk_fixed_new();
@@ -331,26 +327,13 @@ void MainWindow::playfield_remove_widget(audio_widget* awidget)
 void MainWindow::register_builtin_widgets()
 {
     wmanager->register_widget("org.edbfer.synthpp.builtin.debug", "Debug widget", "Just a simple debug widget", debug_widget::create_instance);
-    gtk_combo_box_text_insert(widget_catalog, 0, "org.edbfer.synthpp.builtin.debug", "Debug widget");
-
     wmanager->register_widget("org.edbfer.synthpp.builtin.delay", "Simple delay", "Simple delay", delay_widget::create_instance);
-    gtk_combo_box_text_insert(widget_catalog, 1, "org.edbfer.synthpp.builtin.delay", "Simple delay");
-
     wmanager->register_widget("org.edbfer.synthpp.builtin.fdelay", "Feedback delay", "Delay with feedback and dry/wet selectors", feedback_delay_widget::create_instance);
-    gtk_combo_box_text_insert(widget_catalog, 2, "org.edbfer.synthpp.builtin.fdelay", "Feedback delay");
-
     wmanager->register_widget("org.edbfer.synthpp.builtin.gain", "Gain boost", "Adjusts signal loudness", gain_widget::create_instance);
-    gtk_combo_box_text_insert(widget_catalog, 3, "org.edbfer.synthpp.builtin.gain", "Gain boost");
-    
     wmanager->register_widget("org.edbfer.synthpp.builtin.c4", "Sequencer: 4 bits", "Sequencer with 4 bits of output. Adjustable rate", counter_widget::create_instance_4);
     wmanager->register_widget("org.edbfer.synthpp.builtin.c8", "Sequencer: 8 bits", "Sequencer with 8 bits of output. Adjustable rate", counter_widget::create_instance_8);
     wmanager->register_widget("org.edbfer.synthpp.builtin.c16", "Sequencer: 16 bits", "Sequencer with 16 bits of output. Adjustable rate", counter_widget::create_instance_16);
-    gtk_combo_box_text_insert(widget_catalog, 4, "org.edbfer.synthpp.builtin.c4", "Sequencer: 4 bits");
-    gtk_combo_box_text_insert(widget_catalog, 5, "org.edbfer.synthpp.builtin.c8", "Sequencer: 8 bits");
-    gtk_combo_box_text_insert(widget_catalog, 6, "org.edbfer.synthpp.builtin.c16", "Sequencer: 16 bits");
-
     wmanager->register_widget("org.edbfer.synthpp.builtin.probe", "Probe", "Shows the value of the connected path", probe_widget::create_instance);
-    gtk_combo_box_text_insert(widget_catalog, 7, "org.edbfer.synthpp.builtin.probe", "Probe");
 }
 
 void MainWindow::test_button_clicked_callback(GtkButton* btn, MainWindow* window)
@@ -926,9 +909,13 @@ void MainWindow::create_app_actions()
     //GSimpleACtions
     //add_widget
     app_add_widget_action = (GSimpleAction*) g_simple_action_new("add_widget", G_VARIANT_TYPE_STRING);
+    app_show_properties_action = (GSimpleAction*) g_simple_action_new("show_properties", G_VARIANT_TYPE_UINT64);
+
     g_signal_connect(app_add_widget_action, "activate", G_CALLBACK(app_action_callback), this);
+    g_signal_connect(app_show_properties_action, "activate", G_CALLBACK(app_action_callback), this);
 
     g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(app_add_widget_action));
+    g_action_map_add_action(G_ACTION_MAP(app), G_ACTION(app_show_properties_action));
 }
 
 void MainWindow::app_action_callback(GSimpleAction* act, GVariant* param, MainWindow* window)
@@ -939,7 +926,18 @@ void MainWindow::app_action_callback(GSimpleAction* act, GVariant* param, MainWi
     {
         //this will create widget
         std::string target = g_variant_get_string(param, NULL);
-        window->playfield_add_widget(window->wmanager->create_widget(target));
+        audio_widget* new_audio = window->wmanager->create_widget(target);
+
+        new_audio->program_context = window->program_context;
+        new_audio->name = target;
+        new_audio->long_name = window->wmanager->get_widget_long_name(target);
+
+        window->playfield_add_widget(new_audio);
+    }
+    else if(action_name == "show_properties")
+    {
+        //show stack
+        gtk_stack_set_visible_child_name(window->right_stack, "wprefs");
     }
 }
 
@@ -966,4 +964,18 @@ void MainWindow::darea_popover_lv_fac_setup(GtkSignalListItemFactory* fac, GtkLi
 
 void MainWindow::darea_popover_activated(GtkListBox* lb, GtkListBoxRow* row, MainWindow* window)
 {
+}
+
+void MainWindow::build_widget_properties(audio_widget* widget)
+{
+    //remove previous preferences page
+    gtk_stack_remove(right_stack, GTK_WIDGET(right_preferences));
+
+    //readd
+    right_preferences = (AdwPreferencesPage*) adw_preferences_page_new();
+    gtk_stack_add_named(right_stack, GTK_WIDGET(right_preferences), "wprefs");
+
+    //show and build
+    gtk_stack_set_visible_child_name(right_stack, "wprefs");
+    widget->build_properties_page(right_preferences);
 }

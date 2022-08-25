@@ -57,6 +57,9 @@ class MainWindow
 
         //function to write on the log window
         void log(std::string text);
+
+        //ui dynamics
+        void build_widget_properties(audio_widget* widget);
     
     protected:
 
@@ -86,6 +89,9 @@ class MainWindow
         double darea_cur_mouse_x, darea_cur_mouse_y;
 
         int last_sidebar_position;
+        //right panel has a stack so that it can show widget properties and options
+        GtkStack* right_stack;
+        AdwPreferencesPage* right_preferences;
         GtkBox* right_panel;
         GtkLabel* log_label;
         GtkTextView* log_panel;
@@ -157,6 +163,7 @@ class MainWindow
         //actions
         void create_app_actions();
         GSimpleAction* app_add_widget_action;
+        GSimpleAction* app_show_properties_action;
         static void app_action_callback(GSimpleAction* act, GVariant* param, MainWindow* window);
 
         //popover for the drawing area

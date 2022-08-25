@@ -57,13 +57,13 @@ void delay_widget::on_creation_callback()
     // put(n_samples_picker, 10, 10);
 
     // n_samples_picker.signal_value_changed().connect(sigc::mem_fun(*this, &delay_widget::n_samples_picker_value_changed));
-    add_parameter("nsamp", 10.f);
+    add_parameter("nsamp", parameter_types::NUMERIC, 10.f);
     add_control(control_type::scale, "nsamp_scale", "nsamp");
 }
 
 void delay_widget::process()
 {
-    int new_size = get_parameter_value("nsamp");
+    int new_size = get_numerical_parameter_value("nsamp");
     if(new_size != last_size)
     {
         cbuffer.rresize(new_size, 0.f);

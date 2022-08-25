@@ -15,33 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with synthpp.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+#include "wav_reader_plugin.h"
 
-#include <string>
-#include <variant>
+wav_reader::wav_reader() : audio_widget()
+{  
+}
 
-#include <gtk/gtklabel.h>
-#include <gtk/gtkbutton.h>
-#include <gtk/gtkscale.h>
-
-enum control_type{
-    label,
-    button,
-    scale,
-    file_selector
-};
-
-struct ui_control{
-    std::string name;
-    control_type type;
-    int parameter_index;
-
-    GtkWidget* widget;
-
-    std::string text;
-    std::variant<float, std::string> val;
-    
-    float max_value;
-    float min_value;
-    float step;
-};
+audio_widget* wav_reader::create_instance()
+{
+    return new wav_reader();
+}
