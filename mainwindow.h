@@ -66,7 +66,7 @@ class MainWindow
         GtkApplication* app;
         GtkWindow* main_window;
         //GtkPaned* main_grid;
-        AdwFlap* main_grid;
+        AdwOverlaySplitView* main_grid;
         GtkSeparator* right_separator;
         AdwClamp* right_size_clamp;
         

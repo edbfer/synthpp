@@ -18,7 +18,7 @@
 #include "port.h"
 
 #include <iostream>
-#include <gtk/gtkstylecontext.h>
+//#include <gtk/gtkstylecontext.h>
 #include <gtk/gtkcssprovider.h>
 
 port::port(std::string label, port_type p_type)

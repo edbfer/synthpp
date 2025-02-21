@@ -120,9 +120,9 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     gtk_header_bar_pack_start(window->header_bar, GTK_WIDGET(window->hbar_stop_engine));
 
     //create the grid widget
-    window->main_grid = (AdwFlap*) adw_flap_new();
-    adw_flap_set_modal(window->main_grid, true);
-    gtk_orientable_set_orientation(GTK_ORIENTABLE(window->main_grid), GTK_ORIENTATION_HORIZONTAL);
+    window->main_grid = reinterpret_cast<AdwOverlaySplitView*>(adw_overlay_split_view_new());
+    adw_overlay_split_view_set_collapsed(window->main_grid, true);
+    //gtk_orientable_set_orientation(GTK_ORIENTABLE(window->main_grid), GTK_ORIENTATION_HORIZONTAL);
 
     gtk_window_set_child(window->main_window, GTK_WIDGET(window->main_grid));
     //gtk_widget_set_halign(GTK_WIDGET(window->main_grid), GTK_ALIGN_FILL);
@@ -131,7 +131,6 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     gtk_widget_set_vexpand(GTK_WIDGET(window->main_grid), true);
 
     window->right_separator = (GtkSeparator*) gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    adw_flap_set_separator(window->main_grid, GTK_WIDGET(window->right_separator));
 
     //right panel
     //stack
@@ -152,12 +151,12 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     gtk_widget_set_size_request(GTK_WIDGET(window->right_size_clamp), 100, -1);
     adw_clamp_set_maximum_size(window->right_size_clamp, 100);
 
-    adw_flap_set_flap(window->main_grid, GTK_WIDGET(window->right_stack));
+    adw_overlay_split_view_set_sidebar(window->main_grid, GTK_WIDGET(window->right_stack));
 
     //gtk_paned_set_start_child(window->main_grid, GTK_WIDGET(window->right_panel));
     window->last_sidebar_position = (1./4.) * width;
     //gtk_paned_set_position(window->main_grid, window->last_sidebar_position);
-    adw_flap_set_flap_position(window->main_grid, GTK_PACK_START);
+    adw_overlay_split_view_set_sidebar_position(window->main_grid, GTK_PACK_START);
 
     gtk_widget_set_margin_end(GTK_WIDGET(window->right_panel), 10);
     gtk_widget_set_margin_top(GTK_WIDGET(window->right_panel), 10);
@@ -226,7 +225,7 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     gtk_widget_set_halign(GTK_WIDGET(window->playfield_scroll), GTK_ALIGN_FILL);
     gtk_widget_set_valign(GTK_WIDGET(window->playfield_scroll), GTK_ALIGN_FILL);
     g_signal_connect(window->playfield_scroll, "edge-reached", G_CALLBACK(scrolled_edge_reached), window);
-    adw_flap_set_content(window->main_grid, GTK_WIDGET(window->playfield_scroll));
+    adw_overlay_split_view_set_content(window->main_grid, GTK_WIDGET(window->playfield_scroll));
     //gtk_paned_set_end_child(window->main_grid, GTK_WIDGET(window->playfield_scroll));
 
     //drawing area
@@ -282,9 +281,7 @@ void MainWindow::create_layout(GtkApplication* app, MainWindow* window){
     gtk_widget_add_controller(GTK_WIDGET(window->playfield_aux_darea), GTK_EVENT_CONTROLLER(darea_mouse_motion));
 
     g_signal_connect(darea_gesture_click, "pressed", G_CALLBACK(playfield_aux_darea_gesture_click), window);
-
     g_signal_connect(darea_mouse_motion, "motion", G_CALLBACK(playfield_aux_darea_motion), window);
-
     g_signal_connect(darea_gesture_drag, "drag-begin", G_CALLBACK(playfield_aux_darea_begin_grab), window);
     g_signal_connect(darea_gesture_drag, "drag-update", G_CALLBACK(playfield_aux_darea_update_grab), window);
     g_signal_connect(darea_gesture_drag, "drag-end", G_CALLBACK(playfield_aux_darea_end_grab), window);
@@ -326,14 +323,14 @@ void MainWindow::playfield_remove_widget(audio_widget* awidget)
 
 void MainWindow::register_builtin_widgets()
 {
-    wmanager->register_widget("org.edbfer.synthpp.builtin.debug", "Debug widget", "Just a simple debug widget", debug_widget::create_instance);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.delay", "Simple delay", "Simple delay", delay_widget::create_instance);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.fdelay", "Feedback delay", "Delay with feedback and dry/wet selectors", feedback_delay_widget::create_instance);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.gain", "Gain boost", "Adjusts signal loudness", gain_widget::create_instance);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.c4", "Sequencer: 4 bits", "Sequencer with 4 bits of output. Adjustable rate", counter_widget::create_instance_4);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.c8", "Sequencer: 8 bits", "Sequencer with 8 bits of output. Adjustable rate", counter_widget::create_instance_8);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.c16", "Sequencer: 16 bits", "Sequencer with 16 bits of output. Adjustable rate", counter_widget::create_instance_16);
-    wmanager->register_widget("org.edbfer.synthpp.builtin.probe", "Probe", "Shows the value of the connected path", probe_widget::create_instance);
+    wmanager->register_widget("synthpp.builtin.debug", "Debug widget", "Just a simple debug widget", debug_widget::create_instance);
+    wmanager->register_widget("synthpp.builtin.delay", "Simple delay", "Simple delay", delay_widget::create_instance);
+    wmanager->register_widget("synthpp.builtin.fdelay", "Feedback delay", "Delay with feedback and dry/wet selectors", feedback_delay_widget::create_instance);
+    wmanager->register_widget("synthpp.builtin.gain", "Gain boost", "Adjusts signal loudness", gain_widget::create_instance);
+    wmanager->register_widget("synthpp.builtin.c4", "Sequencer: 4 bits", "Sequencer with 4 bits of output. Adjustable rate", counter_widget::create_instance_4);
+    wmanager->register_widget("synthpp.builtin.c8", "Sequencer: 8 bits", "Sequencer with 8 bits of output. Adjustable rate", counter_widget::create_instance_8);
+    wmanager->register_widget("synthpp.builtin.c16", "Sequencer: 16 bits", "Sequencer with 16 bits of output. Adjustable rate", counter_widget::create_instance_16);
+    wmanager->register_widget("synthpp.builtin.probe", "Probe", "Shows the value of the connected path", probe_widget::create_instance);
 }
 
 void MainWindow::test_button_clicked_callback(GtkButton* btn, MainWindow* window)
@@ -771,6 +768,7 @@ bool MainWindow::playfield_aux_darea_key_down(GtkEventControllerKey* eck, guint 
     {
         //enable wire delete mode
         window->is_delete_key = true;
+
     }
     return true;
 }
@@ -833,7 +831,7 @@ void MainWindow::hbar_collapse_panel_button_toggled(GtkToggleButton* btn, MainWi
         /*show*/
         gtk_button_set_icon_name(GTK_BUTTON(btn), "sidebar-collapse");
         //gtk_paned_set_position(window->main_grid, window->last_sidebar_position);~
-        adw_flap_set_reveal_flap(window->main_grid, true);
+        adw_overlay_split_view_set_show_sidebar(window->main_grid, true);
     }
     else if(gtk_toggle_button_get_active(btn) == false)
     {
@@ -841,7 +839,7 @@ void MainWindow::hbar_collapse_panel_button_toggled(GtkToggleButton* btn, MainWi
         gtk_button_set_icon_name(GTK_BUTTON(btn), "sidebar-expand");
         //window->last_sidebar_position = gtk_paned_get_position(window->main_grid);
         //gtk_paned_set_position(window->main_grid, 0);
-        adw_flap_set_reveal_flap(window->main_grid, false);
+        adw_overlay_split_view_set_show_sidebar(window->main_grid, false);
     }
 }
 

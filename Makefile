@@ -21,7 +21,7 @@ MAKE = make
 PKGCONF_INCLUDES = $(shell pkg-config gtk4 libadwaita-1 sigc++-3.0 -cflags)
 PKGCONF_LIBS = $(shell pkg-config gtk4 libadwaita-1 sigc++-3.0 -libs)
 
-PORTAUDIO_LIBS = -lportaudio -lportmidi -lporttime -ldl
+PORTAUDIO_LIBS = -lportaudio -lportmidi  -ldl
 
 ELF_LIBS = -lbfd
 
@@ -30,7 +30,7 @@ FILE_PARSING_DIR = file_parsing/
 
 SUBDIRS = $(FILE_PARSING_DIR)/file_parsing.o
 
-MAINDIRS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o midi_options_dialog.o settings_manager.o widget_manager.o context.o plugin_manager.o
+MAINDIRS = main.o mainwindow.o audio_widget.o debug_widget.o port.o signal_path.o utils.o audio_engine.o counter_widget.o probe_widget.o source_widget.o sink_widget.o delay_widget.o feedback_delay_widget.o gain_widget.o midi_options_dialog.o settings_manager.o widget_manager.o context.o plugin_manager.o preferences_page.o
 
 OBJECTS = $(MAINDIRS)
 

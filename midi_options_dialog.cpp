@@ -18,7 +18,7 @@
 #include "midi_options_dialog.h"
 
 #include <glib.h>
-#include <gtk/gtkcellrenderertext.h>
+//#include <gtk/gtkcellrenderertext.h>
 
 midi_options_dialog::midi_options_dialog(GtkWindow* parent, audio_engine* engine)
 {

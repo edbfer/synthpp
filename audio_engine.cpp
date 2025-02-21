@@ -98,6 +98,8 @@ void audio_engine::set_current_device(int id)
     }
     source = new source_widget(current_device->maxInputChannels);
     sink = new sink_widget(current_device->maxOutputChannels);
+    source->program_context = program_context;
+    sink->program_context = program_context;
 
     program_context->put_widget(source);
     program_context->put_widget(sink);

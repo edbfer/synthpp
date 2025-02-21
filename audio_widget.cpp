@@ -473,34 +473,3 @@ void audio_widget::mouse_click_callback(GtkGestureClick* gclick, int n_presses, 
         widget->program_context->show_widget_properties(widget);
     }
 }
-
-void audio_widget::build_properties_page(AdwPreferencesPage* ppage)
-{
-    //name group
-    AdwPreferencesGroup* name_group = (AdwPreferencesGroup*) adw_preferences_group_new();
-    adw_preferences_page_set_name(ppage, "Widget Preferences");
-    adw_preferences_page_add(ppage, name_group);
-
-    //create the rows for the name and class name
-    AdwActionRow* name_row = (AdwActionRow*) adw_action_row_new();
-    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(name_row), long_name.c_str());
-    adw_action_row_set_subtitle(name_row, "");
-    adw_preferences_group_add(name_group, GTK_WIDGET(name_row));
-    AdwActionRow* class_row = (AdwActionRow*) adw_action_row_new();
-    adw_preferences_row_set_title(ADW_PREFERENCES_ROW(class_row), name.c_str());
-    adw_action_row_set_subtitle(class_row, "Class name");
-    adw_preferences_group_add(name_group, GTK_WIDGET(class_row));
-
-    //now parameters
-    AdwPreferencesGroup* parameters_group = (AdwPreferencesGroup*) adw_preferences_group_new();
-    adw_preferences_group_set_title(parameters_group, "Parameters");
-    adw_preferences_group_set_description(parameters_group, "Add, Remove and modify parameters");
-    gtk_widget_set_hexpand(GTK_WIDGET(parameters_group), false);
-    adw_preferences_page_add(ppage, parameters_group);
-
-    //for each create row
-    for(parameter p : parameter_list)
-    {
-        
-    }
-}
